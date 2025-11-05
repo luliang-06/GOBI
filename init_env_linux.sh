@@ -14,8 +14,8 @@ echo "info: conda command: $(which conda)" >> "$LOGFILE"
 echo "info: conda version: $(conda --version)" >> "$LOGFILE"
 
 # check environment.yml
-if [[ ! -f "environment.yml" ]]; then
-  echo "ERROR: environment.yml not “exist >> "$LOGFILE"
+if [[ ! -f "environment_linux.yml" ]]; then
+  echo "ERROR: environment_linux.yml not “exist >> "$LOGFILE"
   exit 1
 fi
 
@@ -28,8 +28,8 @@ if conda info --envs | grep -E "^${ENV_NAME}[[:space:]]" >/dev/null; then
 else
   echo "🔧 creating conda env ${ENV_NAME} ..." >> "$LOGFILE"
 
-  conda env create --name ${ENV_NAME} -f environment.yml >> "$LOGFILE" 2>&1 || {
-    echo "ERROR: conda env create 出错" >> "$LOGFILE"
+  conda env create --name ${ENV_NAME} -f environment_linux.yml >> "$LOGFILE" 2>&1 || {
+    echo "ERROR: conda env create failed" >> "$LOGFILE"
     exit 1
   }
   echo "✔ Conda env ${ENV_NAME} created >> "$LOGFILE"
