@@ -3,6 +3,7 @@
 
 '''
 3 Nov 25 updated: export cumU as GeoTiff added.
+5 Nov 25 updated: file directory changed.
 '''
 
 import os
@@ -13,8 +14,11 @@ import numpy as np
 from rasterio.transform import from_bounds
 
 # path setting
-BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 DATA_DIR = os.path.join(BASE_DIR, 'data')
+OUT_DIR = os.path.join(BASE_DIR, 'outputs')
+
+os.makedirs(OUT_DIR, exist_ok=True)
 
 H5_SUFFIX = '.cum_filt_deramp.h5'
 
@@ -83,7 +87,7 @@ if __name__ == '__main__':
             transform = get_transform(corner_lon, corner_lat, post_lon, post_lat, H, W)
 
             cumU_last = cumU[-1, :, :]
-            out_tif = os.path.join(DATA_DIR, f'{base}.filt_deramp.cumU.tif')
+            out_tif = os.path.join(OUT_DIR, f'{base}.filt_deramp.cumU.tif')
             write_tif(cumU_last, transform, out_tif)
 
     print('Finished.')
