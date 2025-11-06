@@ -22,9 +22,10 @@ import seaborn as sns
 
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
-IN_CSV = os.path.join(BASE_DIR, 'data', '2018-2022石羊河地下水监测井数据_水位_fixed.csv')
+IN_CSV = os.path.join(BASE_DIR, 'data', '2018-2022_ShiyangBasin_Groundwater_WaterLevel.csv')
 IN_H5 = os.path.join(BASE_DIR, 'data', '*.cum_filt.h5')
-OUT_DIR = os.path.join(BASE_DIR, 'outputs', 'GW_cum_ts')
+OUT_DIR = os.path.join(BASE_DIR, 'outputs', 'GW_cum_f_ts')
+os.makedirs(OUT_DIR, exist_ok=True)
 
 
 def get_dim(h5_file, dim_name):
@@ -33,9 +34,9 @@ def get_dim(h5_file, dim_name):
     '''
     # get number of points from 'cum':
     if dim_name == 'lon':
-        var_sz = h5_file['cumU'].shape[2]
+        var_sz = h5_file['cum'].shape[2]
     else:
-        var_sz = h5_file['cumU'].shape[1]
+        var_sz = h5_file['cum'].shape[1]
     # get corner / min value:
     var_name = 'corner_{0}'.format(dim_name)
     var_min = h5_file[var_name][()]
@@ -58,7 +59,7 @@ def plot_ts(cum, lon_idx, lat_idx, dt, df):
     of coords that located within each hdf5 files
     '''
 
-    print(f'Plotting ts ...')
+    print(f'Processing {frame_base} ...')
 
     for i, (xi, yi) in enumerate(zip(lon_idx, lat_idx)):
         if np.isfinite(cum[:, yi, xi].astype(float)).any():
@@ -107,7 +108,7 @@ def plot_ts(cum, lon_idx, lat_idx, dt, df):
             plt.rcParams['xtick.labelsize'] = 12
             plt.rcParams['ytick.labelsize'] = 12
 
-            plt.savefig(os.path.join(OUT_DIR, f'{wid}.png'))
+            plt.savefig(os.path.join(OUT_DIR, f'F{frame_base}_W{wid}.png'))
             plt.close()
 
         else:
@@ -170,6 +171,7 @@ if __name__ == '__main__':
     print(f'Total {len(h5_fn)} hdf5 found.')
     # read in h5
     for fn in h5_fn:
+        frame_base = os.path.basename(fn).split('.cum_filt.h5')[0]
         f = h5.File(fn, 'r')
         # print(f.filename)
 
@@ -191,7 +193,7 @@ if __name__ == '__main__':
         # print(lat_idx[:5])
 
         # get vel values
-        cum = f['cumU'][:]
+        cum = f['cum'][:]
         cum_displacement = cum[:, lat_idx, lon_idx]
         # print(cum_val)
 
@@ -202,4 +204,5 @@ if __name__ == '__main__':
         # print(dt)
 
         plot_ts(cum, lon_idx, lat_idx, dt, df)
+
         
