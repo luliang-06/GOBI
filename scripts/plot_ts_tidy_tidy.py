@@ -94,7 +94,7 @@ def plot_ts(cum, lon_idx, lat_idx, dt, df, coords, frame_base):
         )
 
         # ax settings
-        ax.set_title(f'Well ID: {wid}', fontsize=12)
+        ax.set_title(f'Well ID: {wid} Frame: {frame_base}', fontsize=12)
         ax.set_xlabel('Date', fontsize=12)
         ax.set_ylabel('Ground Water Level (m)', fontsize=12)
         ax2.set_ylabel('LOS Displacement (mm)', fontsize=12)
