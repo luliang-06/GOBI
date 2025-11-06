@@ -5,7 +5,7 @@ Tidy version of plot_displacement_ts.py
 Editor: Lu
 Update: 15 Oct 2025 - read in gw data and hdf5 file correclty
 Update: 28 Oct 2025 - plot ts of cum and ground water for specific well
-Update: 3  Nov 2025 - 
+Update: 6  Nov 2025 - output plots path added.
 '''
 
 import os 
@@ -21,9 +21,10 @@ import seaborn as sns
 
 
 
-BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 IN_CSV = os.path.join(BASE_DIR, 'data', '2018-2022石羊河地下水监测井数据_水位_fixed.csv')
 IN_H5 = os.path.join(BASE_DIR, 'data', '*.cum_filt.h5')
+OUT_DIR = os.path.join(BASE_DIR, 'outputs', 'GW_cum_ts')
 
 
 def get_dim(h5_file, dim_name):
@@ -70,7 +71,7 @@ def plot_ts(cum, lon_idx, lat_idx, dt, df):
             sub = df[df['well_id'] == wid]
 
             # try plot
-            fig, ax = plt.subplots(figsize=(12, 7), dpi=50)
+            fig, ax = plt.subplots(figsize=(12, 7), dpi=180)
             ax2 = ax.twinx()
 
             sns.set_theme(style="whitegrid", context="talk", rc={"grid.linewidth": 0.8})
@@ -106,7 +107,7 @@ def plot_ts(cum, lon_idx, lat_idx, dt, df):
             plt.rcParams['xtick.labelsize'] = 12
             plt.rcParams['ytick.labelsize'] = 12
 
-            plt.show()
+            plt.savefig(os.path.join(OUT_DIR, f'{wid}.png'))
             plt.close()
 
         else:
@@ -202,14 +203,3 @@ if __name__ == '__main__':
 
         plot_ts(cum, lon_idx, lat_idx, dt, df)
         
-
-
-
-
-
-    # 2.1 scan hdf5 meta
-    # 2.2 interate all lon & lat to check if located within shape of each A hdf5
-    # if a point located in A1&D1 AND/OR A2&D2 AND/OR A3&D3:
-    #   plot
-    # 2.3 if located, check if located in pair D hdf5
-    # 2.4 if located, print
