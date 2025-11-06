@@ -53,7 +53,7 @@ def find_closest_index(array, value):
     array = np.array(array)  # Convert the list to a NumPy array
     return (np.abs(array - value)).argmin()
 
-def plot_ts(cum, lon_idx, lat_idx, dt, df):
+def plot_ts(cum, lon_idx, lat_idx, dt, df, coords, frame_base):
     '''
     Function to plot groundwater and cum displacement ts
     of coords that located within each hdf5 files
@@ -62,57 +62,54 @@ def plot_ts(cum, lon_idx, lat_idx, dt, df):
     print(f'Processing {frame_base} ...')
 
     for i, (xi, yi) in enumerate(zip(lon_idx, lat_idx)):
-        if np.isfinite(cum[:, yi, xi].astype(float)).any():
-            xi, yi = int(xi), int(yi)
-            cum_ts = cum[:, yi, xi]
-            # print(i, xi, yi, cum_ts.shape)
 
-            # select specific obs_gw by well_id
-            wid = df.loc[i, 'well_id']
-            sub = df[df['well_id'] == wid]
+        xi, yi = int(xi), int(yi)
+        cum_ts = cum[:, yi, xi].astype(float)
+        # print(i, xi, yi, cum_ts.shape)
 
-            # try plot
-            fig, ax = plt.subplots(figsize=(12, 7), dpi=180)
-            ax2 = ax.twinx()
+        # select specific obs_gw by well_id
+        wid = coords.loc[i, 'well_id']
+        sub = df[df['well_id'] == wid]
 
-            sns.set_theme(style="whitegrid", context="talk", rc={"grid.linewidth": 0.8})
-            plt.rcParams['font.family'] = 'sans-serif'
-            plt.rcParams['font.sans-serif'] = ['DejaVu Sans']
+        # try plot
+        fig, ax = plt.subplots(figsize=(12, 7), dpi=180)
+        ax2 = ax.twinx()
 
-            # plot groundwater level
-            sns.scatterplot(
-                x=sub['date'], y=sub['obs_gw'], ax=ax, 
-                s=50, alpha=0.5, facecolor='steelblue', edgecolor='navy', linewidth=0.8,
-                label='Ground Water Level', legend=False
-            )
+        sns.set_theme(style="whitegrid", context="talk", rc={"grid.linewidth": 0.8})
+        plt.rcParams['font.family'] = 'sans-serif'
+        plt.rcParams['font.sans-serif'] = ['DejaVu Sans']
 
-            # plot cummulative displacement
-            sns.scatterplot(
-                x=dt, y=cum_ts, ax=ax2, 
-                s=50, alpha=0.5, facecolor='grey', edgecolor='dimgray', linewidth=0.8,
-                label='Cum displacement', legend=False
-            )
+        # plot groundwater level
+        sns.scatterplot(
+            x=sub['date'], y=sub['obs_gw'], ax=ax, 
+            s=50, alpha=0.5, facecolor='steelblue', edgecolor='navy', linewidth=0.8,
+            label='Ground Water Level', legend=False
+        )
 
-            # ax settings
-            ax.set_title(f'Well ID: {wid}', fontsize=12)
-            ax.set_xlabel('Date', fontsize=12)
-            ax.set_ylabel('Ground Water Level (m)', fontsize=12)
-            ax2.set_ylabel('LOS Displacement (mm)', fontsize=12)
-            ax.grid(linestyle='--', alpha=0.5, color='steelblue')
-            ax.relim()
-            ax.autoscale()
-            # keep 2 decimal places 
-            ax.ticklabel_format(style='plain', axis='y', useOffset=False)
-            ax.yaxis.set_major_formatter(mtick.FormatStrFormatter('%.2f'))
+        # plot cummulative displacement
+        sns.scatterplot(
+            x=dt, y=cum_ts, ax=ax2, 
+            s=50, alpha=0.5, facecolor='grey', edgecolor='dimgray', linewidth=0.8,
+            label='Cum displacement', legend=False
+        )
 
-            plt.rcParams['xtick.labelsize'] = 12
-            plt.rcParams['ytick.labelsize'] = 12
+        # ax settings
+        ax.set_title(f'Well ID: {wid}', fontsize=12)
+        ax.set_xlabel('Date', fontsize=12)
+        ax.set_ylabel('Ground Water Level (m)', fontsize=12)
+        ax2.set_ylabel('LOS Displacement (mm)', fontsize=12)
+        ax.grid(linestyle='--', alpha=0.5, color='steelblue')
+        ax.relim()
+        ax.autoscale()
+        # keep 2 decimal places 
+        ax.ticklabel_format(style='plain', axis='y', useOffset=False)
+        ax.yaxis.set_major_formatter(mtick.FormatStrFormatter('%.2f'))
 
-            plt.savefig(os.path.join(OUT_DIR, f'F{frame_base}_W{wid}.png'))
-            plt.close()
+        plt.rcParams['xtick.labelsize'] = 12
+        plt.rcParams['ytick.labelsize'] = 12
 
-        else:
-            continue
+        plt.savefig(os.path.join(OUT_DIR, f'F{frame_base}_W{wid}.png'))
+        plt.close(fig)
 
 
 
@@ -165,6 +162,9 @@ if __name__ == '__main__':
 
 
     # 2) load hdf5
+    # make df with only useable variables
+    coords = df[['well_id', 'lon', 'lat']]
+    
     # get h5 filenames
     h5_fn = sorted(glob.glob(IN_H5))
     # print(h5_fn)
@@ -172,37 +172,37 @@ if __name__ == '__main__':
     # read in h5
     for fn in h5_fn:
         frame_base = os.path.basename(fn).split('.cum_filt.h5')[0]
-        f = h5.File(fn, 'r')
-        # print(f.filename)
 
-        # get lon and lat values
-        lon = get_dim(f, 'lon')
-        lat = get_dim(f, 'lat')
-        # print(f'lon: {lon}')
-        # print(f'lat: {lat}')
+        with h5.File(fn, 'r') as f:
+            # print(f.filename)
 
-        # grid_lon, grid_lat = np.meshgrid(lon, lat)
+            # get lon and lat values
+            lon = get_dim(f, 'lon')
+            lat = get_dim(f, 'lat')
+            # print(f'lon: {lon}')
+            # print(f'lat: {lat}')
 
-        lon_idx = [find_closest_index(lon, lon_x) for lon_x in df['lon']]
-        lat_idx = [find_closest_index(lat, lat_x) for lat_x in df['lat']]
-        # print(f'LON:')
-        # print(df['lon'][:5])
-        # print(lon_idx[:5])
-        # print(f'LAT:')
-        # print(df['lat'][:5])
-        # print(lat_idx[:5])
+            # grid_lon, grid_lat = np.meshgrid(lon, lat)
 
-        # get vel values
-        cum = f['cum'][:]
-        cum_displacement = cum[:, lat_idx, lon_idx]
-        # print(cum_val)
+            lon_idx = [find_closest_index(lon, lon_x) for lon_x in coords['lon']]
+            lat_idx = [find_closest_index(lat, lat_x) for lat_x in coords['lat']]
+            # print(f'LON:')
+            # print(df['lon'][:5])
+            # print(lon_idx[:5])
+            # print(f'LAT:')
+            # print(df['lat'][:5])
+            # print(lat_idx[:5])
 
-        # get imdates
-        imdates = f['imdates'][:]
-        # print(imdates)
-        dt = [datetime.datetime.strptime(str(date), "%Y%m%d") for date in imdates]
-        # print(dt)
+            # get vel values
+            cum = f['cum'][:]
+            # print(cum_val)
 
-        plot_ts(cum, lon_idx, lat_idx, dt, df)
+            # get imdates
+            imdates = f['imdates'][:]
+            # print(imdates)
+            dt = [datetime.datetime.strptime(str(date), "%Y%m%d") for date in imdates]
+            # print(dt)
+
+        plot_ts(cum, lon_idx, lat_idx, dt, df, coords, frame_base)
 
         
