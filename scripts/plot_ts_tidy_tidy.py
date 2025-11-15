@@ -6,7 +6,7 @@ Editor: Lu
 Update: 15 Oct 2025 - read in gw data and hdf5 file correclty
 Update: 28 Oct 2025 - plot ts of cum and ground water for specific well
 Update: 6  Nov 2025 - output plots path added.
-Update: 15 Nov 2025 - WLS fitting dunction added.
+Update: 15 Nov 2025 - WLS fitting function added; plot function updated to show gw AND cum.
 '''
 
 import os 
@@ -28,6 +28,13 @@ IN_CSV = os.path.join(BASE_DIR, 'data', '2018-2022_ShiyangBasin_Groundwater_Wate
 IN_H5 = os.path.join(BASE_DIR, 'data', '*.cum_filt.h5')
 OUT_DIR = os.path.join(BASE_DIR, 'outputs', 'GW_cum_f_ts')
 os.makedirs(OUT_DIR, exist_ok=True)
+
+# plot settings
+sns.set_theme(style="whitegrid", context="talk", rc={"grid.linewidth": 0.8})
+plt.rcParams['font.family'] = 'sans-serif'
+plt.rcParams['font.sans-serif'] = ['DejaVu Sans']
+plt.rcParams['xtick.labelsize'] = 12
+plt.rcParams['ytick.labelsize'] = 12
 
 
 def get_dim(h5_file, dim_name):
@@ -55,6 +62,41 @@ def find_closest_index(array, value):
     array = np.array(array)  # Convert the list to a NumPy array
     return (np.abs(array - value)).argmin()
 
+
+def calc_wls (x, y, eps=1e-8):
+    # clear data (nan will cause error)
+    mask = ~np.isnan(x) & ~np.isnan(y)
+    x = x[mask]
+    y = y[mask]
+
+    # Apply OLS first
+    x_const = sm.add_constant(x)
+    ols_fit = sm.OLS(y, x_const).fit()
+    print(ols_fit.summary())
+
+    # Apply 1st WLS
+    abs_res = np.abs(ols_fit.resid)                       # absolute residuals: |observed y - fitted y|
+    fm_x = sm.add_constant(ols_fit.fittedvalues)
+    # print(abs_res[:5])
+    # print(fm_x[:5])
+    var_mod = sm.OLS(abs_res, fm_x).fit()                 # model absolute residuals as function of fitted values
+    pred_var = np.clip(var_mod.fittedvalues, eps, None)   # predicted variance: generate variance model form residual to avoid residual=0. variance = b * predicted y + c
+    weight1 = 1.0 / (pred_var ** 2)                       # weights: w = 1 / variance^2
+    wls1_fit = sm.WLS(y, x_const, weights=weight1).fit()
+    print(wls1_fit.summary())
+
+    # Apply 2nd WLS
+    abs_res2 = np.abs(wls1_fit.resid)
+    fm_x2 = sm.add_constant(wls1_fit.fittedvalues)
+    var_mod2 = sm.OLS(abs_res2, fm_x2).fit()
+    pred_var2 = np.clip(var_mod2.fittedvalues, eps, None)
+    wt2 = 1.0 / (pred_var2 ** 2)
+    wls2_fit = sm.WLS(y, x_const, weights=wt2).fit()
+    print(wls2_fit.summary())
+
+    return wls2_fit
+
+
 def plot_ts(cum, lon_idx, lat_idx, dt, df, coords, frame_base):
     '''
     Function to plot groundwater and cum displacement ts
@@ -67,19 +109,17 @@ def plot_ts(cum, lon_idx, lat_idx, dt, df, coords, frame_base):
 
         xi, yi = int(xi), int(yi)
         cum_ts = cum[:, yi, xi].astype(float)
-        # print(i, xi, yi, cum_ts.shape)
+        if not np.isfinite(cum_ts).any():
+            continue
+        # print(cum_ts.shape)
 
         # select specific obs_gw by well_id
         wid = coords.loc[i, 'well_id']
         sub = df[df['well_id'] == wid]
 
-        # try plot
-        fig, ax = plt.subplots(figsize=(12, 7), dpi=180)
+        # plot
+        fig, ax = plt.subplots(figsize=(12, 7), dpi=50)
         ax2 = ax.twinx()
-
-        sns.set_theme(style="whitegrid", context="talk", rc={"grid.linewidth": 0.8})
-        plt.rcParams['font.family'] = 'sans-serif'
-        plt.rcParams['font.sans-serif'] = ['DejaVu Sans']
 
         # plot groundwater level
         sns.scatterplot(
@@ -95,6 +135,7 @@ def plot_ts(cum, lon_idx, lat_idx, dt, df, coords, frame_base):
             label='Cum displacement', legend=False
         )
 
+
         # ax settings
         ax.set_title(f'Well ID: {wid} Frame: {frame_base}', fontsize=12)
         ax.set_xlabel('Date', fontsize=12)
@@ -107,38 +148,9 @@ def plot_ts(cum, lon_idx, lat_idx, dt, df, coords, frame_base):
         ax.ticklabel_format(style='plain', axis='y', useOffset=False)
         ax.yaxis.set_major_formatter(mtick.FormatStrFormatter('%.2f'))
 
-        plt.rcParams['xtick.labelsize'] = 12
-        plt.rcParams['ytick.labelsize'] = 12
-
         # plt.savefig(os.path.join(OUT_DIR, f'F{frame_base}_W{wid}.png'))
         plt.show()
         plt.close(fig)
-
-def calc_wls (x, y, eps=1e-8):
-    # Apply OLS first
-    x_const = sm.add_constant(x)
-    ols_fit = sm.OLS(y, x_const).fit()
-    print(ols_fit.summary())
-
-    # Apply 1st WLS
-    abs_res = np.abs(ols_fit.resid)                 # absolute residuals: |observed y - fitted y|
-    fm_x = sm.add_constant(ols_fit.fittedvalues)
-    var_mod = sm.OLS(abs_res, fm_x).fit()           # model absolute residuals as function of fitted values
-    pred_var = np.clip(var_mod.fittedvalues, eps)   # predicted variance: generate variance model form residual to avoid residual=0. variance = b * predicted y + c
-    weight1 = 1.0 / (pred_var ** 2)                 # weights: w = 1 / variance^2
-    wls1_fit = sm.WLS(y, x_const, weights=weight1).fit()
-    print(wls1_fit.summary())
-
-    # Apply 2nd WLS
-    abs_res2 = np.abs(wls1_fit.resid)
-    fm_x2 = sm.add_constant(wls1_fit.fittedvalues)
-    var_mod2 = sm.OLS(abs_res2, fm_x2).fit()
-    pred_var2 = np.clip(var_mod2.fittedvalues, eps)
-    wt2 = 1.0 / (pred_var2 ** 2)
-    wls2_fit = sm.WLS(y, x_const, weights=wt2).fit()
-    print(wls2_fit.summary())
-
-    return ols_fit, wls1_fit, wls2_fit
 
 
 
@@ -202,7 +214,6 @@ if __name__ == '__main__':
     # read in h5
     for fn in h5_fn[:1]:
         frame_base = os.path.basename(fn).split('.cum_filt.h5')[0]
-        print(f'Processing {frame_base} ...')
 
         with h5.File(fn, 'r') as f:
             # print(f.filename)
@@ -232,9 +243,6 @@ if __name__ == '__main__':
             imdates = f['imdates'][:]
             # print(imdates)
             dt = [datetime.datetime.strptime(str(date), "%Y%m%d") for date in imdates]
-            # print(dt)
 
-        # plot_ts(cum, lon_idx, lat_idx, dt, df, coords, frame_base)
-        calc_wls(np.array(range(len(dt))), df['elevation'].values)
-
+        plot_ts(cum, lon_idx, lat_idx, dt, df, coords, frame_base)
         
