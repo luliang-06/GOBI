@@ -1,0 +1,14 @@
+name: gobi
+channels:
+  - conda-forge
+dependencies:
+  - python=3.10
+  - pip
+  - numpy
+  - pandas
+  - h5py
+  - statsmodels
+  - tqdm
+  - matplotlib
+  - seaborn
+  - rasterio
