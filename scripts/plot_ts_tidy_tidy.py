@@ -6,6 +6,7 @@ Editor: Lu
 Update: 15 Oct 2025 - read in gw data and hdf5 file correclty
 Update: 28 Oct 2025 - plot ts of cum and ground water for specific well
 Update: 6  Nov 2025 - output plots path added.
+Update: 15 Nov 2025 - WLS fitting dunction added.
 '''
 
 import os 
@@ -18,6 +19,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mtick
 import seaborn as sns
+import statsmodels.api as sm
 
 
 
@@ -108,8 +110,35 @@ def plot_ts(cum, lon_idx, lat_idx, dt, df, coords, frame_base):
         plt.rcParams['xtick.labelsize'] = 12
         plt.rcParams['ytick.labelsize'] = 12
 
-        plt.savefig(os.path.join(OUT_DIR, f'F{frame_base}_W{wid}.png'))
+        # plt.savefig(os.path.join(OUT_DIR, f'F{frame_base}_W{wid}.png'))
+        plt.show()
         plt.close(fig)
+
+def calc_wls (x, y, eps=1e-8):
+    # Apply OLS first
+    x_const = sm.add_constant(x)
+    ols_fit = sm.OLS(y, x_const).fit()
+    print(ols_fit.summary())
+
+    # Apply 1st WLS
+    abs_res = np.abs(ols_fit.resid)                 # absolute residuals: |observed y - fitted y|
+    fm_x = sm.add_constant(ols_fit.fittedvalues)
+    var_mod = sm.OLS(abs_res, fm_x).fit()           # model absolute residuals as function of fitted values
+    pred_var = np.clip(var_mod.fittedvalues, eps)   # predicted variance: generate variance model form residual to avoid residual=0. variance = b * predicted y + c
+    weight1 = 1.0 / (pred_var ** 2)                 # weights: w = 1 / variance^2
+    wls1_fit = sm.WLS(y, x_const, weights=weight1).fit()
+    print(wls1_fit.summary())
+
+    # Apply 2nd WLS
+    abs_res2 = np.abs(wls1_fit.resid)
+    fm_x2 = sm.add_constant(wls1_fit.fittedvalues)
+    var_mod2 = sm.OLS(abs_res2, fm_x2).fit()
+    pred_var2 = np.clip(var_mod2.fittedvalues, eps)
+    wt2 = 1.0 / (pred_var2 ** 2)
+    wls2_fit = sm.WLS(y, x_const, weights=wt2).fit()
+    print(wls2_fit.summary())
+
+    return ols_fit, wls1_fit, wls2_fit
 
 
 
@@ -158,6 +187,7 @@ if __name__ == '__main__':
     # print(df[:].dtypes.to_string()) # '.to_string()' is used to hide series dtype printed automatically
     # print(f'csv sample check:')
     # print(df.iloc[:11, :])
+    print(f'CSV data loaded successfully.')
 
 
 
@@ -170,8 +200,9 @@ if __name__ == '__main__':
     # print(h5_fn)
     print(f'Total {len(h5_fn)} hdf5 found.')
     # read in h5
-    for fn in h5_fn:
+    for fn in h5_fn[:1]:
         frame_base = os.path.basename(fn).split('.cum_filt.h5')[0]
+        print(f'Processing {frame_base} ...')
 
         with h5.File(fn, 'r') as f:
             # print(f.filename)
@@ -203,6 +234,7 @@ if __name__ == '__main__':
             dt = [datetime.datetime.strptime(str(date), "%Y%m%d") for date in imdates]
             # print(dt)
 
-        plot_ts(cum, lon_idx, lat_idx, dt, df, coords, frame_base)
+        # plot_ts(cum, lon_idx, lat_idx, dt, df, coords, frame_base)
+        calc_wls(np.array(range(len(dt))), df['elevation'].values)
 
         
