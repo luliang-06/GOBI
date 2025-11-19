@@ -27,8 +27,8 @@ import statsmodels.api as sm
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 IN_CSV = os.path.join(BASE_DIR, 'data', '2018-2022_ShiyangBasin_Groundwater_WaterLevel.csv')
-IN_H5 = os.path.join(BASE_DIR, 'data', '*.cum_filt.h5')
-OUT_DIR = os.path.join(BASE_DIR, 'outputs', 'GW_cum_f_ts')
+IN_H5 = os.path.join(BASE_DIR, 'data', '*.cum_filt_deramp.h5')
+OUT_DIR = os.path.join(BASE_DIR, 'outputs', 'GW_cum_fdU_ts')
 os.makedirs(OUT_DIR, exist_ok=True)
 
 # plot settings
@@ -252,7 +252,7 @@ if __name__ == '__main__':
             lat = get_dim(f, 'lat')
 
             # get vel values
-            cum = f['cum'][:]
+            cum = f['cumU'][:]
 
             # get imdates
             imdates = f['imdates'][:]
