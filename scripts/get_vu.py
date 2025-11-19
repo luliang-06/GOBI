@@ -4,6 +4,7 @@
 '''
 3 Nov 25 updated: export cumU as GeoTiff added.
 5 Nov 25 updated: file directory changed.
+19 Nov 25 updated: division function updated.
 '''
 
 import os
@@ -20,7 +21,7 @@ OUT_DIR = os.path.join(BASE_DIR, 'outputs')
 
 os.makedirs(OUT_DIR, exist_ok=True)
 
-H5_SUFFIX = '.cum_filt.h5'
+H5_SUFFIX = '.cum_filt_deramp.h5'
 
 h5_list = sorted(glob.glob(os.path.join(DATA_DIR, f'*{H5_SUFFIX}')))
 # print(h5_list)
@@ -76,7 +77,8 @@ if __name__ == '__main__':
         
         with h5py.File(f, 'r+') as h5f:
             print('     Reading cum ...')
-            cum = h5f['cum'][:]
+            ds = h5f['cum']
+            T, H, W = ds.shape
             print('     cum read done')
             vel = h5f['vel'][:]
             geoU = h5f['U.geo'][:]
@@ -85,23 +87,36 @@ if __name__ == '__main__':
             post_lon = float(h5f['post_lon'][()])
             post_lat = float(h5f['post_lat'][()])
 
+
+            print(f'     Creating dataset "cumU" ...')
+            if 'cumU' in h5f: del h5f['cumU']
+            cumU_ds = h5f.create_dataset('cumU', shape=(T, H, W), dtype='float32',
+                                         chunks=True, compression='gzip', compression_opts=4, shuffle=True)
+
+
             print(f'     Start dividing cum ...')
-            cumU = division(cum, geoU)
+            for t in range(T):
+                slab = ds[t, :, :]
+                cumU_ds[t, :, :] = division(slab, geoU)
+            # cumU = division(cum, geoU)
             print(f'     Start dividing vel ...')
             velU = division(vel, geoU)
             # print(f'cumU shape: {cumU.shape}')
             # print(f'velU shape: {cumU.shape}')
-            print(f'     Creating dataset "cumU" ...')
-            h5f.create_dataset('cumU', data=cumU)
+
+            # h5f.create_dataset('cumU', data=cumU)
             print(f'     Creating dataset "velU" ...')
+            if 'velU' in h5f: del h5f['velU']
             h5f.create_dataset('velU', data=velU)
 
-            H, W = vel.shape[0], vel.shape[1]
+            T, H, W = ds.shape
+            # H, W = vel.shape[0], vel.shape[1]
+            transform = get_transform(corner_lon, corner_lat, post_lon, post_lat, H, W)
             transform = get_transform(corner_lon, corner_lat, post_lon, post_lat, H, W)
             print(velU.shape)
             print(vel.shape)
-            cumU_last = cumU[-1, :, :]
-            out_tif = os.path.join(OUT_DIR, f'{base}.filt_cumU.tif')
+            cumU_last = cumU_ds[T-1, :, :]
+            out_tif = os.path.join(OUT_DIR, f'{base}.filt_deramp_cumU.tif')
             write_tif(cumU_last, transform, out_tif)
 
     print('Finished.')
