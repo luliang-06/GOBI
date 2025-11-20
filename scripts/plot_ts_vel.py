@@ -9,6 +9,7 @@ Update: 6  Nov 2025 - output plots path added.
 Update: 15 Nov 2025 - WLS fitting function added; plot function updated to show gw AND cum.
 Update: 17 Nov 2025 - plot functions updated to avoid duplicate loops.
 Update: 19 Nov 2025 - WLS fitting function applied and export to csv; plot_ts function updated to add plots of wls results.
+Update: 19 Nov 2025 - vel plot function added
 '''
 
 import os 
@@ -278,6 +279,9 @@ if __name__ == '__main__':
                 gw_model = calc_wls(gw_x, gw_ts)
                 gw_vel, gw_unc = gw_model.params[1], gw_model.bse[1]
 
+                # gw_vel = gw_vel_m * 1000
+                # gw_unc = gw_unc_m * 1000
+
                 # 4.3 cum WLS
                 xi, yi = int(xi), int(yi)
                 cum_ts = cum[:, yi, xi].astype(float)
@@ -312,4 +316,53 @@ if __name__ == '__main__':
     out_csv = os.path.join(BASE_DIR, 'data', 'gw_cum_wls.csv')
     wls_pd.to_csv(out_csv, index=False)
     print(f'Output csv saved to {out_csv}.')
+
+    # 6) plot gw_vel vs cum_vel
+    # 6.1 get valid data
+    valid = wls_pd.dropna(subset=['gw_vel', 'cum_vel'])
+    gw_v = valid['gw_vel'].values.astype(float)
+    cum_v = valid['cum_vel'].values.astype(float)
+
+    # 6.2 plot velocity scatter
+    plt.figure(figsize=(6, 6), dpi=100)
+    plt.errorbar(cum_v, gw_v, xerr=cum_unc, yerr=gw_unc, fmt='none', ecolor='grey', elinewidth=1, capsize=2, alpha=0.7)
+    sns.scatterplot(x=cum_v, y=gw_v, s=60, color='steelblue', edgecolor='navy', alpha=0.9)
+
+    plt.axhline(0, color='lightgrey', linewidth=0.8)
+    plt.axvline(0, color='lightgrey', linewidth=0.8)
+
+    plt.xlabel('Cum velocity (mm/yr)', fontsize=12)
+    plt.ylabel('GW velocity (m/yr)', fontsize=12)
+    plt.title('Cum velocity vs GW velocity', fontsize=14)
+
+    # 6.3 call WLS fitting
+    rel_model = calc_wls(cum_v, gw_v)
+
+    if rel_model is not None:
+        c = rel_model.params[0]  # 截距
+        b = rel_model.params[1]  # 斜率
+        # c_unc = rel_model.bse[0]
+        # b_unc = rel_model.bse[1]
+    
+    print(f'cum_vel = {b:.4f} * gw_vel + {c:.4f}')
+    # print(f'  slope b = {b:.4f} +/- {b_unc:.4f}')
+    # print(f'  intercept c = {c:.4f} +/- {c_unc:.4f}')
+    
+    # 6.4 plot WLS line
+    x_line = np.linspace(gw_v.min(), gw_v.max(), 100)
+    X_line = sm.add_constant(x_line)
+    y_line = rel_model.predict(X_line)
+
+    label_text = f"WLS fit: cum_vel = {b:.4f} * gw_vel + {c:.4f}"
+    plt.plot(x_line, y_line, color='darkred', linewidth=1.8, label=label_text)
+    plt.legend(fontsize=12)
+
+    # 6.5 save plot
+    out_vel_plot = os.path.join(BASE_DIR, 'outputs', 'gw_cum_vel_scatter.png')
+    plt.tight_layout()
+    plt.savefig(out_vel_plot)
+    plt.show()
+    plt.close()
+    print(f'GW vs Cum velocity scatter saved to {out_vel_plot}.')
+    
     print('Finished')
