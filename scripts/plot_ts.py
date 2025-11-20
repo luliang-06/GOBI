@@ -8,7 +8,8 @@ Update: 28 Oct 2025 - plot ts of cum and ground water for specific well
 Update: 6  Nov 2025 - output plots path added.
 Update: 15 Nov 2025 - WLS fitting function added; plot function updated to show gw AND cum.
 Update: 17 Nov 2025 - plot functions updated to avoid duplicate loops.
-Update: 19 Nov 2025 - WLS fitting function applied and export to csv; plot_ts function updated to add plots of wls results.
+Update: 19 Nov 2025 - WLS fitting function applied and export to csv; plot_ts function updated to add plots of wls results; vel plot function added.
+Update: 20 Nov 2025 - vel plot function updated.
 '''
 
 import os 
@@ -27,8 +28,8 @@ import statsmodels.api as sm
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 IN_CSV = os.path.join(BASE_DIR, 'data', '2018-2022_ShiyangBasin_Groundwater_WaterLevel.csv')
-IN_H5 = os.path.join(BASE_DIR, 'data', '*.cum_filt.h5')
-OUT_DIR = os.path.join(BASE_DIR, 'outputs', 'GW_cum_f_ts')
+IN_H5 = os.path.join(BASE_DIR, 'data', '*.cum_filt_deramp.h5')
+OUT_DIR = os.path.join(BASE_DIR, 'outputs', 'GW_cum_fdU_ts')
 os.makedirs(OUT_DIR, exist_ok=True)
 
 # plot settings
@@ -107,7 +108,6 @@ def calc_wls (x, y, eps=1e-8):
     wls2_result = sm.WLS(y, x_const, weights=wt2).fit()
     # print(wls2_result.summary())
 
-    # print(f'WLS slope: {wls2_result.params[1]:.6f} +/- {wls2_result.bse[1]:.6f}')
     return wls2_result
 
 
@@ -237,22 +237,24 @@ if __name__ == '__main__':
     h5_fn = sorted(glob.glob(IN_H5))
     print(f'Total {len(h5_fn)} hdf5 found.')
 
+    well_plotted = 0
+    
     # 3.2 loop for each hdf5 file
     for fn in h5_fn:
-        frame_base = os.path.basename(fn).split('.cum_filt.h5')[0]
+        frame_base = os.path.basename(fn).split('.cum_filt_deramp.h5')[0]
         print(f'Processing {frame_base} ...')
 
-        frame_plotted = 0
 
         # read in hdf5 file
         with h5.File(fn, 'r') as f:
+            frame_plotted = 0
 
             # get lon and lat values
             lon = get_dim(f, 'lon')
             lat = get_dim(f, 'lat')
 
             # get vel values
-            cum = f['cum'][:]
+            cum = f['cumU'][:]
 
             # get imdates
             imdates = f['imdates'][:]
@@ -274,19 +276,29 @@ if __name__ == '__main__':
                 sub = groups.get_group(wid).sort_values('date') # get date for specific well
                 gw_ts = sub['obs_gw'].values.astype(float)
                 gw_x = (sub['date'] - sub['date'].min()).dt.days.values.astype(float)
+                # print(gw_x)
                 # print(f'Well {wid}: x size = {x_gw.size}, y size = {y_gw.size}')
                 gw_model = calc_wls(gw_x, gw_ts)
-                gw_vel, gw_unc = gw_model.params[1], gw_model.bse[1]
+                gw_vel_day, gw_unc_day = gw_model.params[1], gw_model.bse[1]
+
+                # convert gw values from m/day to cm/year
+                gw_vel = gw_vel_day * 365.25
+                gw_unc = gw_unc_day * 365.25
 
                 # 4.3 cum WLS
                 xi, yi = int(xi), int(yi)
                 cum_ts = cum[:, yi, xi].astype(float)
                 cum_x = np.array([(d - cum_dates[0]).days for d in cum_dates], dtype=float)
+                # print(cum_x)
                 cum_model = calc_wls(cum_x, cum_ts)
                 if cum_model is not None:
-                    cum_vel, cum_unc = cum_model.params[1], cum_model.bse[1]
+                    cum_vel_day, cum_unc_day = cum_model.params[1], cum_model.bse[1]
                 else:
                     continue
+
+                # convert gw values from mm/day to mm/year
+                cum_vel = cum_vel_day * 365.25
+                cum_unc = cum_unc_day * 365.25
 
                 # 4.4 store reults
                 wls_results.append({
@@ -301,15 +313,68 @@ if __name__ == '__main__':
                 })
 
                 # 5) plot
-                # plotted = plot_ts(sub, cum_ts, cum_dates, wid, frame_base, gw_model, gw_x, cum_model, cum_x)
-                # if plotted:
-                #     frame_plotted += 1 
-
-        # print(f'Frame {frame_base}: plotted {frame_plotted} / {len(wells)} wells.')
+                plotted = plot_ts(sub, cum_ts, cum_dates, wid, frame_base, gw_model, gw_x, cum_model, cum_x)
+                if plotted:
+                    frame_plotted += 1 
+                    
+            print(f'Frame {frame_base}: plotted {frame_plotted} / {len(wells)} wells.')
+            well_plotted = well_plotted + frame_plotted
+        
+    print(f'total wells plotted {well_plotted} / {len(wells)} wells.')
 
     # 4.5 export wls results to csv
     wls_pd = pd.DataFrame(wls_results)
     out_csv = os.path.join(BASE_DIR, 'data', 'gw_cum_wls.csv')
     wls_pd.to_csv(out_csv, index=False)
     print(f'Output csv saved to {out_csv}.')
+
+    # 6) plot gw_vel vs cum_vel
+    # 6.1 convert to float
+    gw_vel = wls_pd['gw_vel'].values.astype(float)
+    cum_vel = wls_pd['cum_vel'].values.astype(float)
+
+    # 6.2 call WLS fitting
+    rel_model = calc_wls(cum_vel, gw_vel)
+
+    if rel_model is not None:
+        c = rel_model.params[0]  # intercept
+        b = rel_model.params[1]  # slope
+        # c_unc = rel_model.bse[0]
+        # b_unc = rel_model.bse[1]
+    
+    print(f'gw_vel = {b:.4f} * cum_vel + {c:.4f}')
+    # print(f'  slope b = {b:.4f} +/- {b_unc:.4f}')
+    # print(f'  intercept c = {c:.4f} +/- {c_unc:.4f}')
+    
+    # 6.3 plot
+    plt.figure(figsize=(6, 6), dpi=120)
+
+    plt.axhline(0, color='lightgrey', linewidth=0.8)
+    plt.axvline(0, color='lightgrey', linewidth=0.8)
+
+    # plot scatter and errorbar
+    # plt.errorbar(cum_vel, gw_vel, xerr=cum_unc, yerr=gw_unc, fmt='none', ecolor='lightgrey', elinewidth=0.8, capsize=2, alpha=0.5)
+    sns.scatterplot(x=cum_vel, y=gw_vel, s=30, color='steelblue', edgecolor='navy', alpha=0.85)
+    
+    # plot WLS line
+    x_line = np.linspace(cum_vel.min(), cum_vel.max(), 100)
+    X_line = sm.add_constant(x_line)
+    y_line = rel_model.predict(X_line)
+
+    label_text = f"WLS fit: gw_vel = {b:.4f} * cum_vel + {c:.4f}"
+    plt.plot(x_line, y_line, color='darkred', linewidth=1.8, label=label_text)
+    plt.legend(fontsize=10)
+
+    plt.xlabel('cumU velocity (mm/yr)', fontsize=12)
+    plt.ylabel('groundwater velocity (cm/yr)', fontsize=12)
+    plt.title('cumU vel vs groundwater vel', fontsize=14)
+
+    # 6.4 save plot
+    out_vel_plot = os.path.join(BASE_DIR, 'outputs', 'gw_cumU_vel_neb.png')
+    plt.tight_layout()
+    plt.savefig(out_vel_plot)
+    plt.show()
+    plt.close()
+    print(f'GW vs Cum velocity scatter saved to {out_vel_plot}.')
+    
     print('Finished')
