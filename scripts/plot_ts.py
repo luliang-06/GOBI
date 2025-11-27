@@ -282,7 +282,7 @@ if __name__ == '__main__':
                 gw_model = calc_wls(gw_x, gw_ts)
                 gw_vel_day, gw_unc_day = gw_model.params[1], gw_model.bse[1]
 
-                # convert gw values from m/day to cm/year
+                # convert gw values from m/day to m/year
                 gw_vel = gw_vel_day * 365.25
                 gw_unc = gw_unc_day * 365.25
 
@@ -314,14 +314,14 @@ if __name__ == '__main__':
                 })
 
                 # 5) plot
-                plotted = plot_ts(sub, cum_ts, cum_dates, wid, frame_base, gw_model, gw_x, cum_model, cum_x)
-                if plotted:
-                    frame_plotted += 1 
+    #             plotted = plot_ts(sub, cum_ts, cum_dates, wid, frame_base, gw_model, gw_x, cum_model, cum_x)
+    #             if plotted:
+    #                 frame_plotted += 1 
                     
-            print(f'Frame {frame_base}: plotted {frame_plotted} / {len(wells)} wells.')
-            well_plotted = well_plotted + frame_plotted
+    #         print(f'Frame {frame_base}: plotted {frame_plotted} / {len(wells)} wells.')
+    #         well_plotted = well_plotted + frame_plotted
         
-    print(f'total wells plotted {well_plotted} / {len(wells)} wells.')
+    # print(f'total wells plotted {well_plotted} / {len(wells)} wells.')
 
     # 4.5 export wls results to csv
     wls_pd = pd.DataFrame(wls_results)
@@ -355,7 +355,7 @@ if __name__ == '__main__':
 
     # plot scatter and errorbar
     # plt.errorbar(cum_vel, gw_vel, xerr=cum_unc, yerr=gw_unc, fmt='none', ecolor='lightgrey', elinewidth=0.8, capsize=2, alpha=0.5)
-    sns.scatterplot(x=cum_vel, y=gw_vel, s=30, color='steelblue', edgecolor='navy', alpha=0.85)
+    sns.scatterplot(x=cum_vel, y=gw_vel, hue='frame', palette='muted', s=30, alpha=0.85)
     
     # plot WLS line
     x_line = np.linspace(cum_vel.min(), cum_vel.max(), 100)
@@ -367,7 +367,7 @@ if __name__ == '__main__':
     plt.legend(fontsize=10)
 
     plt.xlabel('cumU velocity (mm/yr)', fontsize=12)
-    plt.ylabel('groundwater velocity (cm/yr)', fontsize=12)
+    plt.ylabel('groundwater velocity (m/yr)', fontsize=12)
     plt.title('cumU vel vs groundwater vel', fontsize=14)
 
     # 6.4 save plot
