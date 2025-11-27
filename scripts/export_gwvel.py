@@ -1,8 +1,9 @@
 import rasterio
 import numpy as np
 
-vu_file = '/exports/geos.ed.ac.uk/comet/lliang/GOBI_proj/data/vu_Qi_fillnodata.tif'
-gw_vel_tif = '/exports/geos.ed.ac.uk/comet/lliang/GOBI_proj/outputs/gw_vel.tif'
+vu_file = '/exports/geos.ed.ac.uk/comet/lliang/GOBI_proj/data/vu_all.tif'
+# vu_file = '/exports/geos.ed.ac.uk/comet/lliang/GOBI_proj/data/vu_Qi_fillnodata.tif'
+gw_vel_tif = '/exports/geos.ed.ac.uk/comet/lliang/GOBI_proj/outputs/gw_vel_all.tif'
 
 
 with rasterio.open(vu_file) as src:
