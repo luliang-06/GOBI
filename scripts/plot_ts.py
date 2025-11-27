@@ -276,7 +276,8 @@ if __name__ == '__main__':
                 sub = groups.get_group(wid).sort_values('date') # get date for specific well
                 gw_ts = sub['obs_gw'].values.astype(float)
                 gw_x = (sub['date'] - sub['date'].min()).dt.days.values.astype(float)
-                # print(gw_x)
+                print(gw_x)
+                print(gw_ts)
                 # print(f'Well {wid}: x size = {x_gw.size}, y size = {y_gw.size}')
                 gw_model = calc_wls(gw_x, gw_ts)
                 gw_vel_day, gw_unc_day = gw_model.params[1], gw_model.bse[1]
