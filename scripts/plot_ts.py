@@ -10,6 +10,7 @@ Update: 15 Nov 2025 - WLS fitting function added; plot function updated to show 
 Update: 17 Nov 2025 - plot functions updated to avoid duplicate loops.
 Update: 19 Nov 2025 - WLS fitting function applied and export to csv; plot_ts function updated to add plots of wls results; vel plot function added.
 Update: 20 Nov 2025 - vel plot function updated.
+Update: 27 Nov 2025 - vel plot colorcode added.
 '''
 
 import os 
@@ -276,8 +277,8 @@ if __name__ == '__main__':
                 sub = groups.get_group(wid).sort_values('date') # get date for specific well
                 gw_ts = sub['obs_gw'].values.astype(float)
                 gw_x = (sub['date'] - sub['date'].min()).dt.days.values.astype(float)
-                print(gw_x)
-                print(gw_ts)
+                # print(gw_x)
+                # print(gw_ts)
                 # print(f'Well {wid}: x size = {x_gw.size}, y size = {y_gw.size}')
                 gw_model = calc_wls(gw_x, gw_ts)
                 gw_vel_day, gw_unc_day = gw_model.params[1], gw_model.bse[1]
@@ -348,14 +349,15 @@ if __name__ == '__main__':
     # print(f'  intercept c = {c:.4f} +/- {c_unc:.4f}')
     
     # 6.3 plot
-    plt.figure(figsize=(6, 6), dpi=120)
+    plt.figure(figsize=(10, 10), dpi=120)
 
     plt.axhline(0, color='lightgrey', linewidth=0.8)
     plt.axvline(0, color='lightgrey', linewidth=0.8)
 
     # plot scatter and errorbar
     # plt.errorbar(cum_vel, gw_vel, xerr=cum_unc, yerr=gw_unc, fmt='none', ecolor='lightgrey', elinewidth=0.8, capsize=2, alpha=0.5)
-    sns.scatterplot(x=cum_vel, y=gw_vel, hue='frame', palette='muted', s=30, alpha=0.85)
+    sns.scatterplot(data=wls_pd, x='cum_vel', y='gw_vel', hue='frame', palette='Set2', edgecolor='dimgray', s=40, alpha=0.7)
+    # sns.jointplot(data=wls_pd, x='cum_vel', y='gw_vel', kind='reg', truncate=False)
     
     # plot WLS line
     x_line = np.linspace(cum_vel.min(), cum_vel.max(), 100)
@@ -371,7 +373,7 @@ if __name__ == '__main__':
     plt.title('cumU vel vs groundwater vel', fontsize=14)
 
     # 6.4 save plot
-    out_vel_plot = os.path.join(BASE_DIR, 'outputs', 'gw_cumU_vel_neb.png')
+    out_vel_plot = os.path.join(BASE_DIR, 'outputs', 'GWvsCumU_vel.png')
     plt.tight_layout()
     plt.savefig(out_vel_plot)
     plt.show()
