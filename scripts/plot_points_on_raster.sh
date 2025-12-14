@@ -11,14 +11,12 @@ gmt set MAP_LABEL_OFFSET 2p
 gmt set MAP_ANNOT_OFFSET_SECONDARY auto
 
 
-# raster=/exports/geos.ed.ac.uk/comet/lliang/GOBI_proj/outputs/gw_vel_all.nc # path to a raster file
-raster=/Users/lu/Documents/data/vu_John_new.grd
+raster=/exports/geos.ed.ac.uk/comet/lliang/GOBI_proj/outputs/gw_vel_all.nc # path to a raster file
 
 # echo "lon lat rate 
 # 70 40 1.2
 # 80 48 -2.1" > points.txt 
-# points=/exports/geos.ed.ac.uk/comet/lliang/GOBI_proj/data/gw_cum_wls.csv # or a separate txt file (if comma delimited, you'll need to change the awk statement below slightly)
-points=/Users/lu/Documents/data/gw_cum_wls_ALL.csv
+points=/exports/geos.ed.ac.uk/comet/lliang/GOBI_proj/data/gw_cum_wls.csv # or a separate txt file (if comma delimited, you'll need to change the awk statement below slightly)
 
 gmt begin points_on_raster png,pdf
 	gmt basemap -R101.7/104.7/37.3/39.3 -JX6i -B1 -BWeSn  # draw the map frame, change the boundary to -Rleft/right/bottom/top -B5 for a grid tick every 5 degrees, play with how you capitalise wesn after the second -B
