@@ -17,9 +17,9 @@ from scripts.gps_reference import OpenTif
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 IN_GW = os.path.join(BASE_DIR, 'data', 'gw_cum_wls_FIXED.csv')
-IN_VU = os.path.join(BASE_DIR, 'data', 'vu_John_new.tif')
+IN_VU = os.path.join(BASE_DIR, 'data', 'vu_shiyang_referenced.tif')
 OUT_DIR = os.path.join(BASE_DIR, 'outputs')
-os.makedirs(OUT_DIR, exist_ok=True)
+os.makedirs(OUT_DIR, exist_ok=True)   
 
 # plot settings
 sns.set_theme(style="whitegrid", context="talk", rc={"grid.linewidth": 0.8})
@@ -44,5 +44,10 @@ if __name__ == '__main__':
     gw_gdf = load_gdf(IN_GW)
     
     # Open vu tif
-
+    vu_tif = OpenTif(IN_VU)
+    
     # extract vu value at well location
+    vu, vu_sd = [vu_tif.extract_pixel_value(point.x, point.y, 8)[0] for point in gw_gdf['geometry']]
+    gw_gdf.dropna(inplace=True)
+
+    print(gw_gdf.head)
