@@ -125,7 +125,7 @@ def plot_ts(gw_df, cum_ts, cum_dt, wid, frame_base,
         return False
 
     # plot
-    fig, ax = plt.subplots(figsize=(12, 7), dpi=50)
+    fig, ax = plt.subplots(figsize=(12, 7), dpi=150)
     ax2 = ax.twinx()
 
     # plot groundwater level
@@ -157,7 +157,7 @@ def plot_ts(gw_df, cum_ts, cum_dt, wid, frame_base,
     ax.set_title(f'Well ID: {wid} Frame: {frame_base}', fontsize=12)
     ax.set_xlabel('Date', fontsize=12)
     ax.set_ylabel('Ground Water Level (m)', fontsize=12)
-    ax2.set_ylabel('LOS Displacement (mm)', fontsize=12)
+    ax2.set_ylabel('Vertical Displacement (mm)', fontsize=12)
     ax.grid(linestyle='--', alpha=0.5, color='steelblue')
 
     ymin, ymax = ax.get_ylim()
@@ -182,12 +182,18 @@ if __name__ == '__main__':
     # print(df.columns.tolist())
 
     # 1.1 rename col name into english
-    df = df.rename(columns={'统一编号':'well_id',
-                            '年份':'year',
-                            '经度':'lon', 
-                            '纬度':'lat', 
-                            '地面高程/米':'elevation'
-                            })
+    # df = df.rename(columns={'统一编号':'well_id',
+    #                         '年份':'year',
+    #                         '经度':'lon', 
+    #                         '纬度':'lat', 
+    #                         '地面高程/米':'elevation'
+    #                         })
+    df = df.rename(columns={'wid':'well_id',
+                        'year':'year',
+                        'lon':'lon', 
+                        'lat':'lat', 
+                        'elevation(m)':'elevation'
+                        })
 
     # 1.2 convert well_id to str to avoid scientific rotation
     df['well_id'] = df['well_id'].astype(str)
@@ -315,18 +321,70 @@ if __name__ == '__main__':
                     'cum_unc': cum_unc
                 })
 
-                # 5) plot
-    #             plotted = plot_ts(sub, cum_ts, cum_dates, wid, frame_base, gw_model, gw_x, cum_model, cum_x)
-    #             if plotted:
-    #                 frame_plotted += 1 
+            #     # 5) plot
+            #     plotted = plot_ts(sub, cum_ts, cum_dates, wid, frame_base, gw_model, gw_x, cum_model, cum_x)
+            #     if plotted:
+            #         frame_plotted += 1 
                     
-    #         print(f'Frame {frame_base}: plotted {frame_plotted} / {len(wells)} wells.')
-    #         well_plotted = well_plotted + frame_plotted
+            # print(f'Frame {frame_base}: plotted {frame_plotted} / {len(wells)} wells.')
+            # well_plotted = well_plotted + frame_plotted
         
-    # print(f'total wells plotted {well_plotted} / {len(wells)} wells.')
+    print(f'total wells plotted {well_plotted} / {len(wells)} wells.')
 
     # 4.5 export wls results to csv
     wls_pd = pd.DataFrame(wls_results)
-    out_csv = os.path.join(BASE_DIR, 'data', 'gw_cum_wls.csv')
-    wls_pd.to_csv(out_csv, index=False)
-    print(f'Output csv saved to {out_csv}.')
+    # out_csv = os.path.join(BASE_DIR, 'data', 'gw_cum_wls_FIXED.csv')
+    # wls_pd.to_csv(out_csv, index=False)
+    # print(f'Output csv saved to {out_csv}.')
+
+    # 6) plot gw_vel vs cum_vel
+    # 6.1 convert to float
+    gw_vel = wls_pd['gw_vel'].values.astype(float)
+    cum_vel = wls_pd['cum_vel'].values.astype(float)
+    
+    # 6.2 call WLS fitting
+    rel_model = calc_wls(cum_vel, gw_vel)
+
+    if rel_model is not None:
+        c = rel_model.params[0]  # intercept
+        b = rel_model.params[1]  # slope
+        # c_unc = rel_model.bse[0]
+        # b_unc = rel_model.bse[1]
+    
+    print(f'gw_vel = {b:.4f} * cum_vel + {c:.4f}')
+    # print(f'  slope b = {b:.4f} +/- {b_unc:.4f}')
+    # print(f'  intercept c = {c:.4f} +/- {c_unc:.4f}')
+    
+    # 6.3 plot
+    plt.figure(figsize=(10, 10), dpi=120)
+
+    plt.axhline(0, color='lightgrey', linewidth=0.8)
+    plt.axvline(0, color='lightgrey', linewidth=0.8)
+
+    # plot scatter and errorbar
+    # plt.errorbar(cum_vel, gw_vel, xerr=cum_unc, yerr=gw_unc, fmt='none', ecolor='lightgrey', elinewidth=0.8, capsize=2, alpha=0.5)
+    sns.scatterplot(data=wls_pd, x='cum_vel', y='gw_vel', hue='frame', palette='Set2', edgecolor='dimgray', s=40, alpha=0.7)
+    # sns.jointplot(data=wls_pd, x='cum_vel', y='gw_vel', kind='reg', truncate=False)
+    
+    # plot WLS line
+    x_line = np.linspace(cum_vel.min(), cum_vel.max(), 100)
+    X_line = sm.add_constant(x_line)
+    y_line = rel_model.predict(X_line)
+
+    label_text = f"WLS fit: gw_vel = {b:.4f} * cum_vel + {c:.4f}"
+    plt.plot(x_line, y_line, color='darkred', linewidth=1.8, label=label_text)
+    plt.legend(fontsize=10)
+
+    plt.xlabel('Vertical velocity (mm/yr)', fontsize=12)
+    plt.ylabel('groundwater velocity (m/yr)', fontsize=12)
+    plt.title('VU vs groundwater vel', fontsize=14)
+
+    # 6.4 save plot
+    out_vel_plot = os.path.join(BASE_DIR, 'outputs', 'GWvsVU.png')
+    plt.tight_layout()
+    plt.savefig(out_vel_plot)
+    plt.show()
+    plt.close()
+    print(f'GW vs Cum velocity scatter saved to {out_vel_plot}.')
+
+    print('Finished.')

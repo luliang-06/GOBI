@@ -20,7 +20,7 @@ points=/exports/geos.ed.ac.uk/comet/lliang/GOBI_proj/data/gw_cum_wls.csv # or a 
 
 gmt begin points_on_raster png,pdf
 	gmt basemap -R101.7/104.7/37.3/39.3 -JX6i -B1 -BWeSn  # draw the map frame, change the boundary to -Rleft/right/bottom/top -B5 for a grid tick every 5 degrees, play with how you capitalise wesn after the second -B
-    gmt makecpt -Croma -T-1/1 -I # change the limits of your colour map
+    gmt makecpt -Croma -T-2/2 -I # change the limits of your colour map
 	gmt grdimage $raster -n+c -Q 
     gmt colorbar -DjTL+w1.8/13%+o1/1+h+e+ml -Bx1+l"Vu, mm/yr"  # change the 3 in -Bx3 for tick label interval on the colourbar
 	awk -F "," '(NR>1){print $3, $4, $5}' $points | gmt plot -Sc0.15 -C -Wblack
