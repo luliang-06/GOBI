@@ -224,10 +224,10 @@ def plot_ts(gw_df, cum_ts, cum_dt, wid, frame_base,
 
     return True
 
-def plot_reg(wls_pd):
+def plot_reg(df):
     # convert to float
-    gw_vel = wls_pd['gw_vel'].values.astype(float)
-    cum_vel = wls_pd['cum_vel'].values.astype(float)
+    gw_vel = df['gw_vel'].values.astype(float)
+    cum_vel = df['cum_vel'].values.astype(float)
 
     # call WLS fitting
     rel_model = calc_wls(cum_vel, gw_vel)
@@ -250,7 +250,7 @@ def plot_reg(wls_pd):
 
     # plot scatter and errorbar
     # plt.errorbar(cum_vel, gw_vel, xerr=cum_unc, yerr=gw_unc, fmt='none', ecolor='lightgrey', elinewidth=0.8, capsize=2, alpha=0.5)
-    sns.scatterplot(data=wls_pd, x='cum_vel', y='gw_vel', hue='frame', palette='Set2', edgecolor='dimgray', s=40, alpha=0.7)
+    sns.scatterplot(data=df, x='cum_vel', y='gw_vel', hue='frame', palette='Set2', edgecolor='dimgray', s=40, alpha=0.7)
     # sns.jointplot(data=wls_pd, x='cum_vel', y='gw_vel', kind='reg', truncate=False)
     
     # plot WLS line
@@ -273,6 +273,9 @@ def plot_reg(wls_pd):
     plt.show()
     plt.close()
     print(f'GW vs Cum velocity scatter saved to {out_vel_plot}.')
+
+
+
 
 if __name__ == '__main__':
     # load csv
