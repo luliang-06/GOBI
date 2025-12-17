@@ -228,7 +228,7 @@ def plot_reg(wls_pd):
     # convert to float
     gw_vel = wls_pd['gw_vel'].values.astype(float)
     cum_vel = wls_pd['cum_vel'].values.astype(float)
-    
+
     # call WLS fitting
     rel_model = calc_wls(cum_vel, gw_vel)
 
@@ -258,7 +258,7 @@ def plot_reg(wls_pd):
     X_line = sm.add_constant(x_line)
     y_line = rel_model.predict(X_line)
 
-    label_text = f"WLS fit: gw_vel = {b:.4f} * cum_vel + {c:.4f}"
+    label_text = f"WLS fit: GW change rate = {b:.4f} * VU + {c:.4f}"
     plt.plot(x_line, y_line, color='darkred', linewidth=1.8, label=label_text)
     plt.legend(fontsize=10)
 
@@ -388,6 +388,6 @@ if __name__ == '__main__':
     # print(f'Output csv saved to {out_csv}.')
 
     # 6) plot gw_vel vs cum_vel
-    plot_reg(wls_pd)
+    plot_reg(cum_vel, gw_vel)
 
     print('Finished.')
