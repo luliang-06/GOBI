@@ -25,8 +25,7 @@ BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 IN_TIF = os.path.join(BASE_DIR, 'data', 'vu_John_new.tif')
 IN_GPS = os.path.join(BASE_DIR, 'data', 'ahbgps_v6pt4_3D_29-Nov-2025_eu.dat')
 COORD_EXTEND = (101.7, 37.3, 104.7, 39.3)  # minx, miny, maxx, maxy
-OUT_DIR = os.path.join(BASE_DIR, 'outputs')
-os.makedirs(OUT_DIR, exist_ok=True)
+
 
 class OpenTif:
     """ a Class that stores the band array and metadata of a Gtiff file."""
@@ -247,9 +246,24 @@ if __name__ == '__main__':
     # plt.show()
 
     # Export referenced insar to tif format.
+    ny, nx = tif_shiyang.data_projected.shape
+
     driver = gdal.GetDriverByName("GTiff")
-    out_tif = tif_shiyang.data_projected
-    outdata = driver.Create(os.path.join(BASE_DIR, 'data', 'vu_shiyang_referenced.tif'), out_tif.size, 1, gdal.GDT_Float32)
-    outdata.SetGeoTransform([out_tif.left, out_tif.d1.xres, 0, out_tif.top, 0, out_tif.d1.yres])  # sets same geotransform as input
-    outdata.SetProjection(out_tif.d1.projection)  # sets same projection as input
-    outdata.GetRasterBand(1).WriteArray(out_tif.array)
+    out_path = os.path.join(BASE_DIR, 'data', 'vu_shiyang_referenced.tif')
+
+    outdata = driver.Create(out_path, nx, ny, 1, gdal.GDT_Float32)
+    # GeoTransform & Projection
+    outdata.SetGeoTransform(tif_shiyang.ds.GetGeoTransform())
+    outdata.SetProjection(tif_shiyang.ds.GetProjection())
+
+    outdata.GetRasterBand(1).WriteArray(tif_shiyang.data_projected)
+    outdata.GetRasterBand(1).SetNoDataValue(np.nan)
+
+    outdata.FlushCache()
+    outdata = None
+
+    # plot to check
+    ref_tif = gdal.Open('data/vu_shiyang_referenced.tif')
+    data = ref_tif.read(1)
+    plt.imshow(data)
+    plt.show()
