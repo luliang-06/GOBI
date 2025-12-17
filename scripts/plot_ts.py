@@ -67,6 +67,59 @@ def find_closest_index(array, value):
     array = np.array(array)  # Convert the list to a NumPy array
     return (np.abs(array - value)).argmin()
 
+def load_gw_obs_csv(in_csv):
+    # 1) load csv
+    df = pd.read_csv(in_csv)
+    # print(df.head(5))
+    # print(df.columns.tolist())
+
+    # 1.1 rename col name into english
+    # df = df.rename(columns={'统一编号':'well_id',
+    #                         '年份':'year',
+    #                         '经度':'lon', 
+    #                         '纬度':'lat', 
+    #                         '地面高程/米':'elevation'
+    #                         })
+    df = df.rename(columns={'wid':'well_id',
+                        'year':'year',
+                        'lon':'lon', 
+                        'lat':'lat', 
+                        'elevation(m)':'elevation'
+                        })
+
+    # 1.2 convert well_id to str to avoid scientific rotation
+    df['well_id'] = df['well_id'].astype(str)
+
+    # 1.3 set cols named in pattern 'Mxx_Dxx' as day_cols
+    pattern = re.compile(r'M\d{2}_D\d{2}$')
+    day_cols = [c for c in df.columns if pattern.match(str(c))]
+
+    # 1.4 melt wide csv -> long csv
+    df = df.melt(id_vars=['well_id', 'year', 'lon', 'lat', 'elevation'],
+                value_vars=day_cols,
+                var_name='obs_date',
+                value_name='obs_gw'
+                )
+
+    # 1.5 convert date to datetime
+    md = df['obs_date'].str.extract(r'M(\d{2})_D(\d{2})').astype(float)
+    df['month'] = md[0]
+    df['day'] = md[1]
+    df['year'] = pd.to_numeric(df['year'])
+
+    df['date'] = pd.to_datetime(
+        df['year'].astype(int).astype(str) +
+        df['month'].astype(int).astype(str).str.zfill(2) +
+        df['day'].astype(int).astype(str).str.zfill(2)
+    )
+    # print(f'Data type check:')
+    # print(df[:].dtypes.to_string()) # '.to_string()' is used to hide series dtype printed automatically
+    # print(f'csv sample check:')
+    # print(df.iloc[:11, :])
+    print(f'CSV data loaded successfully.')
+
+    return df
+
 def calc_wls (x, y, eps=1e-8):
     '''
     Cite: https://www.statsmodels.org/dev/generated/statsmodels.regression.linear_model.OLS.html
@@ -222,58 +275,8 @@ def plot_reg(wls_pd):
     print(f'GW vs Cum velocity scatter saved to {out_vel_plot}.')
 
 if __name__ == '__main__':
-    # 1) load csv
-    df = pd.read_csv(IN_CSV)
-    # print(df.head(5))
-    # print(df.columns.tolist())
-
-    # 1.1 rename col name into english
-    # df = df.rename(columns={'统一编号':'well_id',
-    #                         '年份':'year',
-    #                         '经度':'lon', 
-    #                         '纬度':'lat', 
-    #                         '地面高程/米':'elevation'
-    #                         })
-    df = df.rename(columns={'wid':'well_id',
-                        'year':'year',
-                        'lon':'lon', 
-                        'lat':'lat', 
-                        'elevation(m)':'elevation'
-                        })
-
-    # 1.2 convert well_id to str to avoid scientific rotation
-    df['well_id'] = df['well_id'].astype(str)
-
-    # 1.3 set cols named in pattern 'Mxx_Dxx' as day_cols
-    pattern = re.compile(r'M\d{2}_D\d{2}$')
-    day_cols = [c for c in df.columns if pattern.match(str(c))]
-    # print(day_cols)
-
-    # 1.4 melt wide csv -> long csv
-    df = df.melt(id_vars=['well_id', 'year', 'lon', 'lat', 'elevation'],
-                value_vars=day_cols,
-                var_name='obs_date',
-                value_name='obs_gw'
-                )
-
-    # 1.5 convert date to datetime
-    md = df['obs_date'].str.extract(r'M(\d{2})_D(\d{2})').astype(float)
-    # print(md)
-    df['month'] = md[0]
-    df['day'] = md[1]
-    df['year'] = pd.to_numeric(df['year'])
-
-    df['date'] = pd.to_datetime(
-        df['year'].astype(int).astype(str) +
-        df['month'].astype(int).astype(str).str.zfill(2) +
-        df['day'].astype(int).astype(str).str.zfill(2)
-    )
-    # print(f'Data type check:')
-    # print(df[:].dtypes.to_string()) # '.to_string()' is used to hide series dtype printed automatically
-    # print(f'csv sample check:')
-    # print(df.iloc[:11, :])
-    print(f'CSV data loaded successfully.')
-
+    # load csv
+    df = load_gw_obs_csv(IN_CSV)
 
     # 2) Wells and groups
     # 2.1 select all wells, and avoid duplicates
