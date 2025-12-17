@@ -12,7 +12,7 @@ import seaborn as sns
 import geopandas as gpd
 import matplotlib.pyplot as plt
 from shapely.geometry import Point
-from scripts.gps_reference import OpenTif
+from gps_reference import OpenTif
 
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
