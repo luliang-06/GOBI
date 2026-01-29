@@ -1,8 +1,16 @@
 
 '''
-Tidy version of plot_displacement_ts.py
+Scripts to plot time series of of groundwater and cummulative deformation.
 
-Editor: Lu
+Inputs:
+Groundwater.csv
+cum.h5
+
+Outputs:
+outputs/folder of timeseries plots.png
+data/groundwater & cummulative deformation change rate and uncertainties.csv
+
+Log:
 Update: 15 Oct 2025 - read in gw data and hdf5 file correclty
 Update: 28 Oct 2025 - plot ts of cum and ground water for specific well
 Update: 6  Nov 2025 - output plots path added.
@@ -162,7 +170,8 @@ def calc_wls (x, y, eps=1e-8):
     wls2_result = sm.WLS(y, x_const, weights=wt2).fit()
     # print(wls2_result.summary())
 
-    return wls2_result
+    return ols_result
+# , wls2_result
 
 def plot_ts(gw_df, cum_ts, cum_dt, wid, frame_base, 
             gw_model=None, gw_x=None, 
@@ -186,12 +195,12 @@ def plot_ts(gw_df, cum_ts, cum_dt, wid, frame_base,
         label='Ground Water Level', legend=False
     )
 
-    # plot cummulative displacement
-    sns.scatterplot(
-        x=cum_dt, y=cum_ts, ax=ax2, 
-        s=50, alpha=0.5, facecolor='grey', edgecolor='dimgray', linewidth=0.8,
-        label='Cum displacement', legend=False
-    )
+    # # plot cummulative displacement
+    # sns.scatterplot(
+    #     x=cum_dt, y=cum_ts, ax=ax2, 
+    #     s=50, alpha=0.5, facecolor='grey', edgecolor='dimgray', linewidth=0.8,
+    #     label='Cum displacement', legend=False
+    # )
 
     # plot wls result
     # gw
@@ -199,16 +208,16 @@ def plot_ts(gw_df, cum_ts, cum_dt, wid, frame_base,
         gw_y_fit = gw_model.predict(sm.add_constant(gw_x))
         ax.plot(gw_df['date'], gw_y_fit, color='darkblue', linestyle='--', linewidth=1.5)
     # cum
-    if (cum_model is not None) and (cum_x is not None):
-        cum_y_fit = cum_model.predict(sm.add_constant(cum_x))
-        ax2.plot(cum_dt, cum_y_fit, color='black', linestyle='--', linewidth=1.5)
+    # if (cum_model is not None) and (cum_x is not None):
+    #     cum_y_fit = cum_model.predict(sm.add_constant(cum_x))
+    #     ax2.plot(cum_dt, cum_y_fit, color='black', linestyle='--', linewidth=1.5)
 
 
     # ax settings
     ax.set_title(f'Well ID: {wid} Frame: {frame_base}', fontsize=12)
     ax.set_xlabel('Date', fontsize=12)
     ax.set_ylabel('Ground Water Level (m)', fontsize=12)
-    ax2.set_ylabel('Vertical Displacement (mm)', fontsize=12)
+    # ax2.set_ylabel('Vertical Displacement (mm)', fontsize=12)
     ax.grid(linestyle='--', alpha=0.5, color='steelblue')
 
     ymin, ymax = ax.get_ylim()
@@ -375,22 +384,22 @@ if __name__ == '__main__':
                 })
 
             #     # 5) plot
-            #     plotted = plot_ts(sub, cum_ts, cum_dates, wid, frame_base, gw_model, gw_x, cum_model, cum_x)
-            #     if plotted:
-            #         frame_plotted += 1 
+                plotted = plot_ts(sub, cum_ts, cum_dates, wid, frame_base, gw_model, gw_x, cum_model, cum_x)
+                if plotted:
+                    frame_plotted += 1 
                     
-            # print(f'Frame {frame_base}: plotted {frame_plotted} / {len(wells)} wells.')
-            # well_plotted = well_plotted + frame_plotted
+            print(f'Frame {frame_base}: plotted {frame_plotted} / {len(wells)} wells.')
+            well_plotted = well_plotted + frame_plotted
         
     print(f'total wells plotted {well_plotted} / {len(wells)} wells.')
 
     # 4.5 export wls results to csv
-    wls_pd = pd.DataFrame(wls_results)
+    # wls_pd = pd.DataFrame(wls_results)
     # out_csv = os.path.join(BASE_DIR, 'data', 'gw_cum_wls_FIXED.csv')
     # wls_pd.to_csv(out_csv, index=False)
     # print(f'Output csv saved to {out_csv}.')
 
     # 6) plot gw_vel vs cum_vel
-    plot_reg(cum_vel, gw_vel)
+    # plot_reg(cum_vel, gw_vel)
 
     print('Finished.')
