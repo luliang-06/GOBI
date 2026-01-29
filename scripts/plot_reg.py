@@ -25,7 +25,8 @@ OUT_DIR = os.path.join(BASE_DIR, 'outputs')
 os.makedirs(OUT_DIR, exist_ok=True)   
 
 # plot settings
-sns.set_theme(style="whitegrid", context="talk", rc={"grid.linewidth": 0.8})
+# sns.set_theme(style="whitegrid", context="talk", rc={"grid.linewidth": 0.8})
+sns.set_theme(style="whitegrid", rc={"grid.linewidth": 0.8})
 plt.rcParams['font.family'] = 'sans-serif'
 plt.rcParams['font.sans-serif'] = ['DejaVu Sans']
 plt.rcParams['xtick.labelsize'] = 12
@@ -87,7 +88,7 @@ if rel_model is not None:
 print(f'gw_vel = {b:.4f} * vu + {c:.4f}')
 
 plt.figure(figsize=(8, 8), dpi=120)
-sns.scatterplot(data=gw_gdf, x='vu', y='gw_vel', color='#6cabeb', edgecolor='dimgray', linewidth=0.4, s=50, alpha=0.35)
+sns.scatterplot(data=gw_gdf, x='vu', y='gw_vel', color='#6cabeb', edgecolor='dimgray', linewidth=0.4, s=40, alpha=0.35)
 
 x_line = np.linspace(gw_gdf['vu'].min(), gw_gdf['vu'].max(), 100)
 X_line = sm.add_constant(x_line)
