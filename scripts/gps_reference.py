@@ -35,7 +35,8 @@ IN_TIF = os.path.join(BASE_DIR, 'data', 'vu_John_new.tif')
 # IN_GPS = os.path.join(BASE_DIR, 'data', 'ahbgps_v6pt4_3D_29-Nov-2025_eu.dat')
 IN_GPS = os.path.join(BASE_DIR, 'data', 'GPS_merge.csv')
 
-COORD_EXTEND = (101.7, 37.3, 104.7, 39.3)  # minx, miny, maxx, maxy
+COORD_EXTENT = (101.7, 37.3, 104.7, 39.3)  # minx, miny, maxx, maxy
+EXTENT_FOR_PLOT = [COORD_EXTENT[0], COORD_EXTENT[2], COORD_EXTENT[1], COORD_EXTENT[3]]  # left, right, bottom, top
 
 OUT_DIR = os.path.join(BASE_DIR, 'outputs', 'gps_ref')
 if not os.path.exists(OUT_DIR):
@@ -139,31 +140,36 @@ if __name__ == '__main__':
     # print(f'tif_John size: {tif.xsize} x {tif.ysize}, resolution: {tif.xres} x {tif.yres}, coord extent: ({tif.left}, {tif.bottom}, {tif.right}, {tif.top})')
 
     # clip to Shiyang basin extent and save
-    tif_shiyang = gdal.Warp(os.path.join(BASE_DIR, 'data', 'vu_shiyang.tif'), IN_TIF, outputBounds=COORD_EXTEND, format="GTiff", dstNodata=-9999)
+    tif_shiyang = gdal.Warp(os.path.join(BASE_DIR, 'data', 'vu_shiyang.tif'), IN_TIF, outputBounds=COORD_EXTENT, format="GTiff", dstNodata=-9999, dstSRS='EPSG:4326')
     tif_shiyang = None  # close the dataset
 
     # reopen the clipped tif
     tif_shiyang = OpenTif(os.path.join(BASE_DIR, 'data', 'vu_shiyang.tif'))
     # print(f'tif_shiyang size: {tif_shiyang.xsize} x {tif_shiyang.ysize}, resolution: {tif_shiyang.xres} x {tif_shiyang.yres}, coord extent: ({tif_shiyang.left}, {tif_shiyang.bottom}, {tif_shiyang.right}, {tif_shiyang.top})')
 
+    print('Check projection of InSAR vu:')
+    print(tif_shiyang.ds.GetGeoTransform())
+    print(tif_shiyang.ds.GetProjection())
+    print('-----------------------------------')
     # plot to check
-    plt.imshow(tif.data, vmin=np.nanpercentile(tif.data, 1), vmax=np.nanpercentile(tif.data,99), interpolation='nearest')
-    plt.imshow(tif_shiyang.data, 
-               extent=(tif_shiyang.left, tif_shiyang.right, tif_shiyang.bottom, tif_shiyang.top), 
-               vmin=np.nanpercentile(tif_shiyang.data, 1), 
-               vmax=np.nanpercentile(tif_shiyang.data,99), 
-               interpolation='nearest')
-    plt.colorbar(label='mm/yr')
-    plt.savefig(os.path.join(OUT_DIR, '0.org_vu.png'), dpi=150, bbox_inches='tight')
-    plt.close()
+    # plt.imshow(tif.data, vmin=np.nanpercentile(tif.data, 1), vmax=np.nanpercentile(tif.data,99), interpolation='nearest')
+    # plt.imshow(tif_shiyang.data, 
+    #            extent=(tif_shiyang.left, tif_shiyang.right, tif_shiyang.bottom, tif_shiyang.top), 
+    #            vmin=np.nanpercentile(tif_shiyang.data, 1), 
+    #            vmax=np.nanpercentile(tif_shiyang.data,99), 
+    #            interpolation='nearest')
+    # plt.colorbar(label='mm/yr')
+    # plt.savefig(os.path.join(OUT_DIR, '0.org_vu.png'), dpi=150, bbox_inches='tight')
+    # plt.close()
 
 
     ## Load GPS data
     gps=load_gps_csv(IN_GPS)
-    gps_shiyang = gpd.clip(gps, box(*COORD_EXTEND))  # clip to Shiyang basin extent
+    gps_shiyang = gpd.clip(gps, box(*COORD_EXTENT))  # clip to Shiyang basin extent
     gps_shiyang.reset_index(drop=True, inplace=True)
     print('GPS data preview:')
     print(gps_shiyang.head())
+    print('-----------------------------------')
 
     # plot to check
     fig, ax = plt.subplots(figsize=(10, 10))
@@ -247,16 +253,16 @@ if __name__ == '__main__':
     # plot to check
     fig, ax = plt.subplots(1, 3, sharey='all', figsize=(10, 4))
     im = ax[0].imshow(tif_shiyang.data, 
-                      extent=(tif_shiyang.left, tif_shiyang.right, tif_shiyang.bottom, tif_shiyang.top), 
+                      extent=EXTENT_FOR_PLOT, 
                       vmin=np.nanpercentile(tif_shiyang.data_projected, 1), 
                       vmax=np.nanpercentile(tif_shiyang.data,99),
                       interpolation='nearest')
     im = ax[1].imshow(ramp_array, 
-                      extent=(tif_shiyang.left, tif_shiyang.right, tif_shiyang.bottom, tif_shiyang.top), 
+                      extent=EXTENT_FOR_PLOT, 
                       vmin=np.nanpercentile(tif_shiyang.data_projected, 1), 
                       vmax=np.nanpercentile(tif_shiyang.data,99), 
                       interpolation='nearest')
-    im = ax[2].imshow(tif_shiyang.data_projected, extent=(tif_shiyang.left, tif_shiyang.right, tif_shiyang.bottom, tif_shiyang.top), 
+    im = ax[2].imshow(tif_shiyang.data_projected, extent=EXTENT_FOR_PLOT, 
                       vmin=np.nanpercentile(tif_shiyang.data_projected, 1), 
                       vmax=np.nanpercentile(tif_shiyang.data,99), 
                       interpolation='nearest')
@@ -287,16 +293,19 @@ if __name__ == '__main__':
     outdata.FlushCache()
     outdata = None
 
+
     # plot to check
+    vmin, vmax = -8, 8
     with rasterio.open(os.path.join(OUT_DIR, 'vu_shiyang_referenced.tif')) as src:
         data = src.read(1).astype(float)
         data[data == src.nodata] = np.nan
 
         fig, ax = plt.subplots(figsize=(10, 8))
-        im = ax.imshow(data, vmin=-8, vmax=8)
+        im = ax.imshow(data, vmin=vmin, vmax=vmax, extent=EXTENT_FOR_PLOT)
+        gps_shiyang.plot(ax=ax, c=gps_shiyang['vu'], vmin=vmin, vmax=vmax, markersize=60, edgecolor='k')
         plt.colorbar(im, ax=ax, label='mm/yr')
         ax.set_title('Referenced Vu')
-        plt.savefig(os.path.join(OUT_DIR, '5.vu_shiyang_referenced.png'), dpi=150, bbox_inches='tight')
+        plt.savefig(os.path.join(OUT_DIR, '5.gps_on_ref_vu.png'), dpi=150, bbox_inches='tight')
         plt.close()
 
     print('Finished.')
