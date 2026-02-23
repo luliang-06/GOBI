@@ -4,10 +4,19 @@ script to reference InSAR vertical velocity to GPS vertical velocity
 using planar ramp inversion.
 
 Inputs: InSAR tif file; GPS file
-Outputs: Referenced InSAR tif file
+Outputs: 
+    outputs/gps_ref/
+        0.org_vu.png
+        1.gps_on_org_vu.gps
+        2.gps_vu_offset.png
+        3.gps_vu_fit.png
+        4.gps_referenced_vu.png
+        5.vu_shiyang_referenced.png
+        vu_shiyang_referenced.tif
 '''
 
 import os
+import rasterio
 import numpy as np
 import pandas as pd
 import geopandas as gpd
@@ -23,8 +32,14 @@ warnings.filterwarnings("ignore")
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 IN_TIF = os.path.join(BASE_DIR, 'data', 'vu_John_new.tif')
-IN_GPS = os.path.join(BASE_DIR, 'data', 'ahbgps_v6pt4_3D_29-Nov-2025_eu.dat')
+# IN_GPS = os.path.join(BASE_DIR, 'data', 'ahbgps_v6pt4_3D_29-Nov-2025_eu.dat')
+IN_GPS = os.path.join(BASE_DIR, 'data', 'GPS_merge.csv')
+
 COORD_EXTEND = (101.7, 37.3, 104.7, 39.3)  # minx, miny, maxx, maxy
+
+OUT_DIR = os.path.join(BASE_DIR, 'outputs', 'gps_ref')
+if not os.path.exists(OUT_DIR):
+    os.path.mkdir(OUT_DIR)
 
 
 class OpenTif:
@@ -76,7 +91,7 @@ class OpenTif:
         outdata.GetRasterBand(1).WriteArray(self.array)
 
 
-def load_gps(gps):
+def load_gps_dat(gps):
     gps_gdf = gpd.GeoDataFrame(geometry=[], crs="EPSG:4326")
     gps_gdf['geometry'] = None
     index = 0
@@ -94,16 +109,26 @@ def load_gps(gps):
             
             index += 1
 
-    # liang = './gps/GPS_Liang_etal_2013.csv'
-    # fl = open(liang, "r").readlines()
-    # for line in fl:
-    #     if not line.startswith(('*', "Sta.", ",", " Eurasia", " ITRF2008")):
-    #         sta, lon, lat, VN, σvN, VE, σvE, CNE, VU, σvU, Vu, σvu = line.split(',')
-    #         if VU != '-':  # only input vertical if Liang as a vertical value
-    #             if sta in gps_gdf['station'].values:  # only input vertical if Wang has the same station
-    #                 index = gps_gdf.index[gps_gdf['station'] == sta].tolist()[0]  # get index in dataframe based on station
-    #                 gps_gdf.loc[index, 'vu'] = float(Vu)  # up velocity in mm/yr relative to stable northern neighbour
-    #                 gps_gdf.loc[index, 'su'] = float(σvu)  # sigma vu relative to stable northern neighbour
+    return gps_gdf
+
+def load_gps_csv(gps):
+    df = pd.read_csv(gps)
+
+    gps_gdf = gpd.GeoDataFrame(
+        df[['Site', 'Velo_East', 'Sigma_East', 'Velo_North', 'Sigma_North', 'Velo_Up', 'Sigma_Up']],
+        geometry=gpd.points_from_xy(df['Longitude'], df['Latitude']),
+        crs="EPSG:4326"
+    )
+
+    gps_gdf = gps_gdf.rename(columns={
+        'Site':        'station',
+        'Velo_East':   've',
+        'Sigma_East':  'se',
+        'Velo_North':  'vn',
+        'Sigma_North': 'sn',
+        'Velo_Up':     'vu',
+        'Sigma_Up':    'su'
+    })
 
     return gps_gdf
 
@@ -122,44 +147,43 @@ if __name__ == '__main__':
     # print(f'tif_shiyang size: {tif_shiyang.xsize} x {tif_shiyang.ysize}, resolution: {tif_shiyang.xres} x {tif_shiyang.yres}, coord extent: ({tif_shiyang.left}, {tif_shiyang.bottom}, {tif_shiyang.right}, {tif_shiyang.top})')
 
     # plot to check
-    # plt.imshow(tif.data, vmin=np.nanpercentile(tif.data, 1), vmax=np.nanpercentile(tif.data,99), interpolation='nearest')
-    # plt.imshow(tif_shiyang.data, 
-    #            extent=(tif_shiyang.left, tif_shiyang.right, tif_shiyang.bottom, tif_shiyang.top), 
-    #            vmin=np.nanpercentile(tif_shiyang.data, 1), 
-    #            vmax=np.nanpercentile(tif_shiyang.data,99), 
-    #            interpolation='nearest')
-    # plt.colorbar(label='mm/yr')
-    # plt.show()
+    plt.imshow(tif.data, vmin=np.nanpercentile(tif.data, 1), vmax=np.nanpercentile(tif.data,99), interpolation='nearest')
+    plt.imshow(tif_shiyang.data, 
+               extent=(tif_shiyang.left, tif_shiyang.right, tif_shiyang.bottom, tif_shiyang.top), 
+               vmin=np.nanpercentile(tif_shiyang.data, 1), 
+               vmax=np.nanpercentile(tif_shiyang.data,99), 
+               interpolation='nearest')
+    plt.colorbar(label='mm/yr')
+    plt.savefig(os.path.join(OUT_DIR, '0.org_vu.png'), dpi=150, bbox_inches='tight')
+    plt.close()
 
 
     ## Load GPS data
-    # check data
-    gps=pd.read_csv(IN_GPS, delim_whitespace=True)
-    # print(gps.head())
-
-    gps=load_gps(IN_GPS)
+    gps=load_gps_csv(IN_GPS)
     gps_shiyang = gpd.clip(gps, box(*COORD_EXTEND))  # clip to Shiyang basin extent
     gps_shiyang.reset_index(drop=True, inplace=True)
-    # print(gps_shiyang.head())
+    print('GPS data preview:')
+    print(gps_shiyang.head())
 
     # plot to check
-    # fig, ax = plt.subplots(figsize=(10, 10))
-    # plt.imshow(tif_shiyang.data, 
-    #         extent=(tif_shiyang.left, tif_shiyang.right, tif_shiyang.bottom, tif_shiyang.top), 
-    #         vmin=np.nanpercentile(tif_shiyang.data, 1), 
-    #         vmax=np.nanpercentile(tif_shiyang.data,99), 
-    #         interpolation='nearest')
-    # gps_shiyang.plot(ax=ax, c=gps_shiyang['vu'], markersize=60, edgecolor='k') 
-    # plt.colorbar(label='mm/yr')
-    # plt.show()
+    fig, ax = plt.subplots(figsize=(10, 10))
+    plt.imshow(tif_shiyang.data, 
+            extent=(tif_shiyang.left, tif_shiyang.right, tif_shiyang.bottom, tif_shiyang.top), 
+            vmin=np.nanpercentile(tif_shiyang.data, 1), 
+            vmax=np.nanpercentile(tif_shiyang.data,99), 
+            interpolation='nearest')
+    gps_shiyang.plot(ax=ax, c=gps_shiyang['vu'], markersize=60, edgecolor='k') 
+    plt.colorbar(label='mm/yr')
+    plt.savefig(os.path.join(OUT_DIR, '1.gps_on_org_vu.png'), dpi=150, bbox_inches='tight')
+    plt.close()
 
     # extract the InSAR vu at gps locations and calculate the difference
     gps_shiyang['insar'] = [tif_shiyang.extract_pixel_value(point.x, point.y, 8)[0] for point in gps_shiyang['geometry']]
     gps_shiyang.dropna(inplace=True)
     gps_shiyang['offset']=gps_shiyang['insar']-gps_shiyang['vu']
-    # print(gps_shiyang)
-    # gps_shiyang.plot('offset')
-    # plt.show()
+    gps_shiyang.plot('offset')
+    plt.savefig(os.path.join(OUT_DIR, '2.gps_vu_offset.png'), dpi=150, bbox_inches='tight')
+    plt.close()
 
 
     ## Planar Ramp Inversion
@@ -189,23 +213,24 @@ if __name__ == '__main__':
     # print(rms_offset, rms_residual)
 
     # plot to check the fit
-    # fig, ax = plt.subplots(1, 3, sharey='all')
+    fig, ax = plt.subplots(1, 3, sharey='all')
 
-    # im = ax[0].scatter(x, y, c=offset, vmin=-3, vmax=3, marker='o', cmap='RdBu')
-    # im = ax[1].scatter(x, y, c=model, vmin=-3, vmax=3, marker='o', cmap='RdBu')
-    # im = ax[2].scatter(x, y, c=residual, vmin=-3, vmax=3, marker='o', cmap='RdBu')
+    im = ax[0].scatter(x, y, c=offset, vmin=-3, vmax=3, marker='o', cmap='RdBu')
+    im = ax[1].scatter(x, y, c=model, vmin=-3, vmax=3, marker='o', cmap='RdBu')
+    im = ax[2].scatter(x, y, c=residual, vmin=-3, vmax=3, marker='o', cmap='RdBu')
 
-    # ax[0].set_title('Offset')
-    # ax[1].set_title('Model')
-    # ax[2].set_title('Residual')
+    ax[0].set_title('Offset')
+    ax[1].set_title('Model')
+    ax[2].set_title('Residual')
 
-    # cbar = plt.colorbar(im, ax=ax)
-    # cbar.set_label('Offset Value')
+    cbar = plt.colorbar(im, ax=ax)
+    cbar.set_label('Offset Value')
 
-    # plt.show()
+    plt.savefig(os.path.join(OUT_DIR, '3.gps_vu_fit.png'), dpi=150, bbox_inches='tight')
+    plt.close()
 
 
-    ## Placing the InSAR LOS into GPS's reference frame
+    ## Placing the InSAR vu into GPS's reference frame
     # 1. construct a zero matrix of the size of the InSAR raster. 
     ramp_array = np.zeros(tif_shiyang.data.shape)
     # 2. extract the pixel coordinates (row, column) of all pixels as a long 2-column matrix
@@ -220,38 +245,38 @@ if __name__ == '__main__':
     tif_shiyang.data_projected = tif_shiyang.data - ramp_array
 
     # plot to check
-    # fig, ax = plt.subplots(1, 3, sharey='all', figsize=(10, 4))
-    # im = ax[0].imshow(tif_shiyang.data, 
-    #                   extent=(tif_shiyang.left, tif_shiyang.right, tif_shiyang.bottom, tif_shiyang.top), 
-    #                   vmin=np.nanpercentile(tif_shiyang.data_projected, 1), 
-    #                   vmax=np.nanpercentile(tif_shiyang.data,99),
-    #                   interpolation='nearest')
-    # im = ax[1].imshow(ramp_array, 
-    #                   extent=(tif_shiyang.left, tif_shiyang.right, tif_shiyang.bottom, tif_shiyang.top), 
-    #                   vmin=np.nanpercentile(tif_shiyang.data_projected, 1), 
-    #                   vmax=np.nanpercentile(tif_shiyang.data,99), 
-    #                   interpolation='nearest')
-    # im = ax[2].imshow(tif_shiyang.data_projected, extent=(tif_shiyang.left, tif_shiyang.right, tif_shiyang.bottom, tif_shiyang.top), 
-    #                   vmin=np.nanpercentile(tif_shiyang.data_projected, 1), 
-    #                   vmax=np.nanpercentile(tif_shiyang.data,99), 
-    #                   interpolation='nearest')
+    fig, ax = plt.subplots(1, 3, sharey='all', figsize=(10, 4))
+    im = ax[0].imshow(tif_shiyang.data, 
+                      extent=(tif_shiyang.left, tif_shiyang.right, tif_shiyang.bottom, tif_shiyang.top), 
+                      vmin=np.nanpercentile(tif_shiyang.data_projected, 1), 
+                      vmax=np.nanpercentile(tif_shiyang.data,99),
+                      interpolation='nearest')
+    im = ax[1].imshow(ramp_array, 
+                      extent=(tif_shiyang.left, tif_shiyang.right, tif_shiyang.bottom, tif_shiyang.top), 
+                      vmin=np.nanpercentile(tif_shiyang.data_projected, 1), 
+                      vmax=np.nanpercentile(tif_shiyang.data,99), 
+                      interpolation='nearest')
+    im = ax[2].imshow(tif_shiyang.data_projected, extent=(tif_shiyang.left, tif_shiyang.right, tif_shiyang.bottom, tif_shiyang.top), 
+                      vmin=np.nanpercentile(tif_shiyang.data_projected, 1), 
+                      vmax=np.nanpercentile(tif_shiyang.data,99), 
+                      interpolation='nearest')
 
-    # ax[0].set_title('InSAR LOS')
-    # ax[1].set_title('Ramp Model')
-    # ax[2].set_title('Referenced LOS')
+    ax[0].set_title('InSAR LOS')
+    ax[1].set_title('Ramp Model')
+    ax[2].set_title('Referenced LOS')
 
-    # # Adding a color bar to show the mapping of 'offset' to colors
-    # cbar = plt.colorbar(im, ax=ax, orientation='horizontal')
-    # cbar.set_label('LOS, mm/yr')
-    # plt.show()
+    # Adding a color bar to show the mapping of 'offset' to colors
+    cbar = plt.colorbar(im, ax=ax, orientation='horizontal')
+    cbar.set_label('LOS, mm/yr')
+    plt.savefig(os.path.join(OUT_DIR, '4.gps_referenced_vu.png'), dpi=150, bbox_inches='tight')
+    plt.close()
 
     # Export referenced insar to tif format.
     ny, nx = tif_shiyang.data_projected.shape
 
     driver = gdal.GetDriverByName("GTiff")
-    out_path = os.path.join(BASE_DIR, 'data', 'vu_shiyang_referenced.tif')
 
-    outdata = driver.Create(out_path, nx, ny, 1, gdal.GDT_Float32)
+    outdata = driver.Create(os.path.join(OUT_DIR, 'vu_shiyang_referenced.tif'), nx, ny, 1, gdal.GDT_Float32)
     # GeoTransform & Projection
     outdata.SetGeoTransform(tif_shiyang.ds.GetGeoTransform())
     outdata.SetProjection(tif_shiyang.ds.GetProjection())
@@ -263,7 +288,15 @@ if __name__ == '__main__':
     outdata = None
 
     # plot to check
-    ref_tif = gdal.Open('data/vu_shiyang_referenced.tif')
-    data = ref_tif.read(1)
-    plt.imshow(data)
-    plt.show()
+    with rasterio.open(os.path.join(OUT_DIR, 'vu_shiyang_referenced.tif')) as src:
+        data = src.read(1).astype(float)
+        data[data == src.nodata] = np.nan
+
+        fig, ax = plt.subplots(figsize=(10, 8))
+        im = ax.imshow(data, cmap='RdYlBu', vmin=-10, vmax=10)
+        plt.colorbar(im, ax=ax, label='mm/yr')
+        ax.set_title('Referenced Vu')
+        plt.savefig(os.path.join(OUT_DIR, '5.vu_shiyang_referenced.png'), dpi=150, bbox_inches='tight')
+        plt.close()
+
+    print('Finished.')
