@@ -293,7 +293,7 @@ if __name__ == '__main__':
         data[data == src.nodata] = np.nan
 
         fig, ax = plt.subplots(figsize=(10, 8))
-        im = ax.imshow(data, vmin=-5, vmax=5)
+        im = ax.imshow(data, vmin=-8, vmax=8)
         plt.colorbar(im, ax=ax, label='mm/yr')
         ax.set_title('Referenced Vu')
         plt.savefig(os.path.join(OUT_DIR, '5.vu_shiyang_referenced.png'), dpi=150, bbox_inches='tight')
