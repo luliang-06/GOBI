@@ -3,12 +3,17 @@
 Scripts to plot time series of of groundwater and cummulative deformation.
 
 Inputs:
-Groundwater.csv
-cum.h5
+data/
+    2018-2022_ShiyangBasin_Grounswater_EaterLevel_FIXED.csv
+    fid*.cum.h5
 
 Outputs:
-outputs/folder of timeseries plots.png
-data/groundwater & cummulative deformation change rate and uncertainties.csv
+outputs/
+    GWLvsVU.png                     scatter plot between GWL & VU
+    GWL_VU_ts/                      folder of duo-timeseries plots
+        F{frameID}_W{wellID}.png
+data/
+    GWL_VU_wls.csv                  GWL change rate & VU change rate and uncertainties
 
 Log:
 Update: 15 Oct 2025 - read in gw data and hdf5 file correclty
@@ -20,6 +25,7 @@ Update: 19 Nov 2025 - WLS fitting function applied and export to csv; plot_ts fu
 Update: 20 Nov 2025 - vel plot function updated.
 Update: 27 Nov 2025 - vel plot colorcode added.
 Update: 15 Dec 2025 - plot regression function reordered.
+Update: 16 Mar 2026 - sinusoidal fitting line for time series added.
 '''
 
 import os 
@@ -33,13 +39,14 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as mtick
 import seaborn as sns
 import statsmodels.api as sm
+from scipy.optimize import curve_fit
 
 
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 IN_CSV = os.path.join(BASE_DIR, 'data', '2018-2022_ShiyangBasin_Groundwater_WaterLevel_FIXED.csv')
 IN_H5 = os.path.join(BASE_DIR, 'data', '*.cum_filt_deramp.h5')
-OUT_DIR = os.path.join(BASE_DIR, 'outputs', 'GW_cum_fdU_ts')
+OUT_DIR = os.path.join(BASE_DIR, 'outputs', 'GWL_VU_ts')
 os.makedirs(OUT_DIR, exist_ok=True)
 
 # plot settings
@@ -128,7 +135,7 @@ def load_gw_obs_csv(in_csv):
 
     return df
 
-def calc_wls (x, y, eps=1e-8):
+def calc_wls(x, y, eps=1e-8):
     '''
     Cite: https://www.statsmodels.org/dev/generated/statsmodels.regression.linear_model.OLS.html
     '''
@@ -141,8 +148,8 @@ def calc_wls (x, y, eps=1e-8):
     y = y[mask]
     
     # skip nan or insufficient data
-    if x.size < 2:
-        return None
+    # if x.size < 2:
+    #     return None
 
     # Apply OLS first
     x_const = sm.add_constant(x)
@@ -173,9 +180,32 @@ def calc_wls (x, y, eps=1e-8):
     return ols_result
 # , wls2_result
 
+def calc_sin(x, y):
+    # clean data
+    x = np.asarray(x, float)
+    y = np.asarray(y, float)
+    mask = np.isfinite(x) & np.isfinite(y)
+    x, y = x[mask], y[mask]
+
+    if x.size < 5:
+        return None
+
+    # define sinusoidal model (plus long-term linear trend)
+    def sin_model(t, A, T, phi, k, c):  # curve_fit(independent variable, dependent variable1, dependent variable2, ...)
+        return A * np.sin(2 * np.pi * t/T + phi) + k * t + c
+    
+    # give a estimate value for every dependent variables (in order of sin_model() function)
+    p0 = [np.std(y), 365.25, 0.0, 0.0, np.median(y)]
+    popt, _ = curve_fit(sin_model, x, y, p0=p0, maxfev=10000)
+    return popt
+
+def predict_sin(t, popt):
+    A, T, phi, k, c = popt
+    return A * np.sin(2 * np.pi * t/T + phi) + k * t + c
+    
 def plot_ts(gw_df, cum_ts, cum_dt, wid, frame_base, 
-            gw_model=None, gw_x=None, 
-            cum_model=None, cum_x=None):
+            gw_x=None, gw_model=None, gw_sin_model=None,   
+            cum_x=None, cum_model=None, cum_sin_model=None):
     '''
     Function to plot groundwater and cum displacement ts
     of coords that located within each hdf5 files
@@ -185,7 +215,7 @@ def plot_ts(gw_df, cum_ts, cum_dt, wid, frame_base,
         return False
 
     # plot
-    fig, ax = plt.subplots(figsize=(12, 7), dpi=150)
+    fig, ax = plt.subplots(figsize=(12, 7), dpi=120)
     ax2 = ax.twinx()
 
     # plot groundwater level
@@ -195,37 +225,48 @@ def plot_ts(gw_df, cum_ts, cum_dt, wid, frame_base,
         label='Ground Water Level', legend=False
     )
 
-    # # plot cummulative displacement
-    # sns.scatterplot(
-    #     x=cum_dt, y=cum_ts, ax=ax2, 
-    #     s=50, alpha=0.5, facecolor='grey', edgecolor='dimgray', linewidth=0.8,
-    #     label='Cum displacement', legend=False
-    # )
+    # plot cummulative displacement
+    sns.scatterplot(
+        x=cum_dt, y=cum_ts, ax=ax2, 
+        s=50, alpha=0.5, facecolor='grey', edgecolor='dimgray', linewidth=0.8,
+        label='Cum displacement', legend=False
+    )
 
     # plot wls result
     # gw
     if (gw_model is not None) and (gw_x is not None):
         gw_y_fit = gw_model.predict(sm.add_constant(gw_x))
-        ax.plot(gw_df['date'], gw_y_fit, color='darkblue', linestyle='--', linewidth=1.5)
+        ax.plot(gw_df['date'], gw_y_fit, color='steelblue', linestyle='-', linewidth=1.5)
+    
+    if (gw_sin_model is not None) and (gw_x is not None):
+        gw_sin_y = predict_sin(gw_x, gw_sin_model)
+        ax.plot(gw_df['date'], gw_sin_y, color='steelblue', linestyle='-', linewidth=1.5)
     # cum
-    # if (cum_model is not None) and (cum_x is not None):
-    #     cum_y_fit = cum_model.predict(sm.add_constant(cum_x))
-    #     ax2.plot(cum_dt, cum_y_fit, color='black', linestyle='--', linewidth=1.5)
+    if (cum_model is not None) and (cum_x is not None):
+        cum_y_fit = cum_model.predict(sm.add_constant(cum_x))
+        ax2.plot(cum_dt, cum_y_fit, color='black', linestyle='-', linewidth=1.5)
+
+    if (cum_sin_model is not None) and (cum_x is not None):
+        cum_sin_y = predict_sin(cum_x, cum_sin_model)
+        ax2.plot(cum_dt, cum_sin_y, color='black', linestyle='-', linewidth=1.5)
+
 
 
     # ax settings
     ax.set_title(f'Well ID: {wid} Frame: {frame_base}', fontsize=12)
-    ax.set_xlabel('Date', fontsize=12)
-    ax.set_ylabel('Ground Water Level (m)', fontsize=12)
-    # ax2.set_ylabel('Vertical Displacement (mm)', fontsize=12)
-    ax.grid(linestyle='--', alpha=0.5, color='steelblue')
+    ax.set_xlabel('Time', fontsize=12)
+    ax.set_ylabel('Ground Water Level (m)', color='navy', fontsize=12)
+    ax2.set_ylabel('Vertical Velocity (mm)', fontsize=12)
+    # ax.grid(linestyle='--', alpha=0.5, color='steelblue')
+    ax.grid(False)
+    ax2.grid(False)
 
     ymin, ymax = ax.get_ylim()
     yrange = ymax - ymin
     ax.set_ylim(ymin - 0.05*yrange, ymax + 0.05*yrange)
-    # keep 2 decimal places 
     ax.ticklabel_format(style='plain', axis='y', useOffset=False)
-    ax.yaxis.set_major_formatter(mtick.FormatStrFormatter('%.2f'))
+    ax.tick_params(axis='y', colors='navy')
+    ax.yaxis.set_major_formatter(mtick.FormatStrFormatter('%.2f'))  # keep 2 decimal places 
 
     plt.savefig(os.path.join(OUT_DIR, f'F{frame_base}_W{wid}.png'))
     # plt.show()
@@ -272,8 +313,8 @@ def plot_reg(df):
     plt.legend(fontsize=10)
 
     plt.xlabel('Vertical velocity (mm/yr)', fontsize=12)
-    plt.ylabel('groundwater velocity (m/yr)', fontsize=12)
-    plt.title('VU vs groundwater vel', fontsize=14)
+    plt.ylabel('Groundwater Change Rate (m/yr)', fontsize=12)
+    plt.title('VU vs Groundwater Change Rate', fontsize=14)
 
     # save plot
     out_vel_plot = os.path.join(BASE_DIR, 'outputs', 'GWvsVU.png')
@@ -281,12 +322,13 @@ def plot_reg(df):
     plt.savefig(out_vel_plot)
     plt.show()
     plt.close()
-    print(f'GW vs Cum velocity scatter saved to {out_vel_plot}.')
+    print(f'GW vs VU scatter saved to {out_vel_plot}.')
 
 
 
 
 if __name__ == '__main__':
+    print('Start.')
     # load csv
     df = load_gw_obs_csv(IN_CSV)
 
@@ -338,53 +380,62 @@ if __name__ == '__main__':
             # print(df['lat'][:5])
             # print(lat_idx[:5])
 
-            # 4) WLS fitting
+            # 4) Model fitting
             # 4.1 loop each well within this frame
             for wid, xi, yi, lon, lat in zip(wells['well_id'], lon_idx, lat_idx, wells['lon'], wells['lat']):    # zip() to iterate two lists together
 
-                # 4.2 groundwater WLS
+                # 4.2 groundwater model fit
                 sub = groups.get_group(wid).sort_values('date') # get date for specific well
                 gw_ts = sub['obs_gw'].values.astype(float)
                 gw_x = (sub['date'] - sub['date'].min()).dt.days.values.astype(float)
                 # print(gw_x)
                 # print(gw_ts)
                 # print(f'Well {wid}: x size = {x_gw.size}, y size = {y_gw.size}')
-                gw_model = calc_wls(gw_x, gw_ts)
-                gw_vel_day, gw_unc_day = gw_model.params[1], gw_model.bse[1]
 
-                # convert gw values from m/day to m/year
-                gw_vel = gw_vel_day * 365.25
-                gw_unc = gw_unc_day * 365.25
+                # # for linear fit
+                # gw_model = calc_wls(gw_x, gw_ts)
+                # gw_vel_day, gw_unc_day = gw_model.params[1], gw_model.bse[1]
+                # # convert gw values from m/day to m/year
+                # gw_vel = gw_vel_day * 365.25
+                # gw_unc = gw_unc_day * 365.25
 
-                # 4.3 cum WLS
+                # for sinusoidal fit
+                gw_sin_model = calc_sin(gw_x, gw_ts)
+
+                # 4.3 cum fit
                 xi, yi = int(xi), int(yi)
                 cum_ts = cum[:, yi, xi].astype(float)
                 cum_x = np.array([(d - cum_dates[0]).days for d in cum_dates], dtype=float)
                 # print(cum_x)
-                cum_model = calc_wls(cum_x, cum_ts)
-                if cum_model is not None:
-                    cum_vel_day, cum_unc_day = cum_model.params[1], cum_model.bse[1]
-                else:
-                    continue
 
-                # convert gw values from mm/day to mm/year
-                cum_vel = cum_vel_day * 365.25
-                cum_unc = cum_unc_day * 365.25
+                # # for linear fit
+                # cum_model = calc_wls(cum_x, cum_ts)
+                # if cum_model is not None:
+                #     cum_vel_day, cum_unc_day = cum_model.params[1], cum_model.bse[1]
+                # else:
+                #     continue
+                
+                # # convert gw values from mm/day to mm/year
+                # cum_vel = cum_vel_day * 365.25
+                # cum_unc = cum_unc_day * 365.25
 
-                # 4.4 store reults
-                wls_results.append({
-                    'frame': frame_base,
-                    'well_id': wid,
-                    'lon': lon,
-                    'lat': lat,
-                    'gw_vel': gw_vel,
-                    'gw_unc': gw_unc,
-                    'cum_vel': cum_vel,
-                    'cum_unc': cum_unc
-                })
+                # for sinusoidal fit
+                cum_sin_model = calc_sin(cum_x, cum_ts)
 
-            #     # 5) plot
-                plotted = plot_ts(sub, cum_ts, cum_dates, wid, frame_base, gw_model, gw_x, cum_model, cum_x)
+                # # 4.4 store reults
+                # wls_results.append({
+                #     'frame': frame_base,
+                #     'well_id': wid,
+                #     'lon': lon,
+                #     'lat': lat,
+                #     'gw_vel': gw_vel,
+                #     'gw_unc': gw_unc,
+                #     'cum_vel': cum_vel,
+                #     'cum_unc': cum_unc
+                # })
+
+                # 5) plot
+                plotted = plot_ts(sub, cum_ts, cum_dates, wid, frame_base, gw_x=gw_x, gw_sin_model=gw_sin_model, cum_x=cum_x, cum_sin_model=cum_sin_model)
                 if plotted:
                     frame_plotted += 1 
                     
@@ -395,11 +446,11 @@ if __name__ == '__main__':
 
     # 4.5 export wls results to csv
     # wls_pd = pd.DataFrame(wls_results)
-    # out_csv = os.path.join(BASE_DIR, 'data', 'gw_cum_wls_FIXED.csv')
+    # out_csv = os.path.join(BASE_DIR, 'data', 'GWL_VU_wls.csv')
     # wls_pd.to_csv(out_csv, index=False)
     # print(f'Output csv saved to {out_csv}.')
 
-    # 6) plot gw_vel vs cum_vel
-    # plot_reg(cum_vel, gw_vel)
+    # 6) plot GWL change rate vs vu change rate
+    # plot_reg(wls_pd)
 
     print('Finished.')
