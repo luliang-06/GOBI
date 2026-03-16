@@ -392,12 +392,12 @@ if __name__ == '__main__':
                 # print(gw_ts)
                 # print(f'Well {wid}: x size = {x_gw.size}, y size = {y_gw.size}')
 
-                # # for linear fit
-                # gw_model = calc_wls(gw_x, gw_ts)
-                # gw_vel_day, gw_unc_day = gw_model.params[1], gw_model.bse[1]
-                # # convert gw values from m/day to m/year
-                # gw_vel = gw_vel_day * 365.25
-                # gw_unc = gw_unc_day * 365.25
+                # for linear fit
+                gw_model = calc_wls(gw_x, gw_ts)
+                gw_vel_day, gw_unc_day = gw_model.params[1], gw_model.bse[1]
+                # convert gw values from m/day to m/year
+                gw_vel = gw_vel_day * 365.25
+                gw_unc = gw_unc_day * 365.25
 
                 # for sinusoidal fit
                 gw_sin_model = calc_sin(gw_x, gw_ts)
@@ -408,16 +408,16 @@ if __name__ == '__main__':
                 cum_x = np.array([(d - cum_dates[0]).days for d in cum_dates], dtype=float)
                 # print(cum_x)
 
-                # # for linear fit
-                # cum_model = calc_wls(cum_x, cum_ts)
-                # if cum_model is not None:
-                #     cum_vel_day, cum_unc_day = cum_model.params[1], cum_model.bse[1]
-                # else:
-                #     continue
+                # for linear fit
+                cum_model = calc_wls(cum_x, cum_ts)
+                if cum_model is not None:
+                    cum_vel_day, cum_unc_day = cum_model.params[1], cum_model.bse[1]
+                else:
+                    continue
                 
-                # # convert gw values from mm/day to mm/year
-                # cum_vel = cum_vel_day * 365.25
-                # cum_unc = cum_unc_day * 365.25
+                # convert gw values from mm/day to mm/year
+                cum_vel = cum_vel_day * 365.25
+                cum_unc = cum_unc_day * 365.25
 
                 # for sinusoidal fit
                 cum_sin_model = calc_sin(cum_x, cum_ts)
@@ -435,7 +435,7 @@ if __name__ == '__main__':
                 # })
 
                 # 5) plot
-                plotted = plot_ts(sub, cum_ts, cum_dates, wid, frame_base, gw_x=gw_x, gw_sin_model=gw_sin_model, cum_x=cum_x, cum_sin_model=cum_sin_model)
+                plotted = plot_ts(sub, cum_ts, cum_dates, wid, frame_base, gw_x=gw_x, gw_model=gw_model, gw_sin_model=gw_sin_model, cum_x=cum_x, cum_model=cum_model, cum_sin_model=cum_sin_model)
                 if plotted:
                     frame_plotted += 1 
                     
