@@ -148,8 +148,8 @@ def calc_wls(x, y, eps=1e-8):
     y = y[mask]
     
     # skip nan or insufficient data
-    # if x.size < 2:
-    #     return None
+    if x.size < 2:
+        return None
 
     # Apply OLS first
     x_const = sm.add_constant(x)
@@ -221,41 +221,62 @@ def plot_ts(gw_df, cum_ts, cum_dt, wid, frame_base,
     # plot groundwater level
     sns.scatterplot(
         x=gw_df['date'], y=gw_df['obs_gw'], ax=ax, 
-        s=50, alpha=0.5, facecolor='steelblue', edgecolor='navy', linewidth=0.8,
-        label='Ground Water Level', legend=False
-    )
+        s=35, alpha=0.5, facecolor='steelblue', edgecolor='navy', linewidth=0.8,
+        label='Groundwater Level')
 
     # plot cummulative displacement
     sns.scatterplot(
         x=cum_dt, y=cum_ts, ax=ax2, 
-        s=50, alpha=0.5, facecolor='grey', edgecolor='dimgray', linewidth=0.8,
-        label='Cum displacement', legend=False
-    )
+        s=35, alpha=0.5, facecolor='grey', edgecolor='dimgray', linewidth=0.8,
+        label='VU')
 
-    # plot wls result
-    # gw
+    # plot model results
+    # gw sinusoidal model
+    if (gw_sin_model is not None) and (gw_x is not None):
+        gw_sin_y = predict_sin(gw_x, gw_sin_model)  # sinusoidal line
+        ax.plot(gw_df['date'], gw_sin_y, color='steelblue', linestyle='-', linewidth=1.5, label='GW Sinusoidal Fit')
+        gw_sin_slope = gw_sin_model[3] * gw_x + gw_sin_model[4]  # slope line
+        ax.plot(gw_df['date'], gw_sin_slope, color='steelblue', linestyle='-', linewidth=1.5)
+        # A, T, phi, k, c = gw_sin_model
+        # ax.text(0.75, 0.98, 
+        #         f'$GW_{{sin}} = {A:.2f} \\sin ( \\frac{{2\\pi}}{{{T:.1f}}} t + {phi:.2f}) + {k:.3f} t + {c:.2f}$', 
+        #         transform=ax.transAxes, fontsize=9, color='steelblue',
+        #         verticalalignment='top')
+
+    # gw linear model
     if (gw_model is not None) and (gw_x is not None):
         gw_y_fit = gw_model.predict(sm.add_constant(gw_x))
-        ax.plot(gw_df['date'], gw_y_fit, color='steelblue', linestyle='-', linewidth=1.5)
-    
-    if (gw_sin_model is not None) and (gw_x is not None):
-        gw_sin_y = predict_sin(gw_x, gw_sin_model)
-        ax.plot(gw_df['date'], gw_sin_y, color='steelblue', linestyle='-', linewidth=1.5)
-    # cum
+        ax.plot(gw_df['date'], gw_y_fit, color='navy', linestyle='--', linewidth=1.0, label='GW Linear Fit')
+        # k, c = gw_model.params[1], gw_model.params[0]
+        # ax.text(0.75, 0.93, f'$GW_{{lin}} = {k:.3f} t + {c:.2f}$',
+        #         transform=ax.transAxes, fontsize=9, color='navy',
+        #         verticalalignment='top')
+
+    # vu sinusoidal model
+    if (cum_sin_model is not None) and (cum_x is not None):
+        cum_sin_y = predict_sin(cum_x, cum_sin_model)   # sinusoidal line
+        ax2.plot(cum_dt, cum_sin_y, color='dimgray', linestyle='-', linewidth=1.5, label='VU Sinusoidal Fit')
+        cum_sin_slope = cum_sin_model[3] * cum_x + cum_sin_model[4]  # slope line
+        ax2.plot(cum_dt, cum_sin_slope, color='dimgray', linestyle='-', linewidth=1.5)
+        # ax2.text(0.75, 0.88, 
+        #         f'$VU_{{sin}} = {A:.2f} \\sin ( \\frac{{2\\pi}}{{{T:.1f}}} t + {phi:.2f}) + {k:.3f} t + {c:.2f}$', 
+        #         transform=ax.transAxes, fontsize=9, color='dimgray',
+        #         verticalalignment='top')
+
+    # vu linear model
     if (cum_model is not None) and (cum_x is not None):
         cum_y_fit = cum_model.predict(sm.add_constant(cum_x))
-        ax2.plot(cum_dt, cum_y_fit, color='black', linestyle='-', linewidth=1.5)
-
-    if (cum_sin_model is not None) and (cum_x is not None):
-        cum_sin_y = predict_sin(cum_x, cum_sin_model)
-        ax2.plot(cum_dt, cum_sin_y, color='black', linestyle='-', linewidth=1.5)
+        ax2.plot(cum_dt, cum_y_fit, color='black', linestyle='--', linewidth=1.0, label='VU Linear Fit')
+        # ax2.text(0.75, 0.83, f'$VU_{{lin}} = {k:.3f} t + {c:.2f}$',
+        #          transform=ax.transAxes, fontsize=9, color='black',
+        #          verticalalignment='top')
 
 
 
     # ax settings
     ax.set_title(f'Well ID: {wid} Frame: {frame_base}', fontsize=12)
     ax.set_xlabel('Time', fontsize=12)
-    ax.set_ylabel('Ground Water Level (m)', color='navy', fontsize=12)
+    ax.set_ylabel('Ground Water Level (m)', color='steelblue', fontsize=12)
     ax2.set_ylabel('Vertical Velocity (mm)', fontsize=12)
     # ax.grid(linestyle='--', alpha=0.5, color='steelblue')
     ax.grid(False)
@@ -265,8 +286,13 @@ def plot_ts(gw_df, cum_ts, cum_dt, wid, frame_base,
     yrange = ymax - ymin
     ax.set_ylim(ymin - 0.05*yrange, ymax + 0.05*yrange)
     ax.ticklabel_format(style='plain', axis='y', useOffset=False)
-    ax.tick_params(axis='y', colors='navy')
+    ax.tick_params(axis='y', colors='steelblue')
     ax.yaxis.set_major_formatter(mtick.FormatStrFormatter('%.2f'))  # keep 2 decimal places 
+
+    lines1, labels1 = ax.get_legend_handles_labels()
+    lines2, labels2 = ax2.get_legend_handles_labels()
+    ax.legend(lines1 + lines2, labels1 + labels2, loc='best', fontsize=9)
+    ax2.get_legend().remove() if ax2.get_legend() else None
 
     plt.savefig(os.path.join(OUT_DIR, f'F{frame_base}_W{wid}.png'))
     # plt.show()
