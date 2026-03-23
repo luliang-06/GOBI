@@ -304,14 +304,14 @@ def plot_ts(gw_df, cum_ts, cum_dt, wid, frame_base,
     # yrange = ymax - ymin
     # ax.set_ylim(ymin - 0.2*yrange, ymax + 0.2*yrange)
     gw_centre = np.median(gw_df['obs_gw'].dropna())
-    ax.set_ylim(gw_centre - 10, gw_centre + 10)
+    ax.set_ylim(gw_centre - 5, gw_centre + 5)
     if cum_unfilt_ts is not None:
         cumF_centre = np.median(cum_ts[~np.isnan(cum_ts)])
         cumUF_centre = np.median(cum_unfilt_ts[~np.isnan(cum_unfilt_ts)])
-        cum_centre = np.mean(cumF_centre, cumUF_centre)
+        cum_centre = np.mean([cumF_centre, cumUF_centre])
     else:
         cum_centre = np.median(cum_ts[~np.isnan(cum_ts)])
-    ax2.set_ylim(cum_centre - 20, cum_centre + 20)
+    ax2.set_ylim(cum_centre - 50, cum_centre + 50)
 
     ax.ticklabel_format(style='plain', axis='y', useOffset=False)
     ax.tick_params(axis='y', colors='navy')
