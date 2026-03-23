@@ -549,39 +549,39 @@ if __name__ == '__main__':
                     cum_unfilt_sin_result = calc_sin(cum_unfilt_x, cum_unfilt_ts)
                     cum_unfilt_sin_model, cum_unfilt_sin_unc = cum_unfilt_sin_result if cum_unfilt_sin_result is not None else (None, None)
 
-                # # 6) append model result
-                # model_results.append({
-                #     'frame': frame_base,
-                #     'well_id': wid,
-                #     'lon': lon,
-                #     'lat': lat,
-                #     # linear fit
-                #     'gw_cr_linear':   gw_vel,
-                #     'gw_unc_linear':  gw_unc,
-                #     'vu_linear':      cum_vel,
-                #     'vu_unc_linear':  cum_unc,
-                #     # sinusoidal fit: gw  (A in m, phi in rad, k in m/yr)
-                #     'gw_A':           gw_sin_model[0]       if gw_sin_model is not None else np.nan,
-                #     'gw_A_unc':       gw_sin_unc[0]         if gw_sin_unc   is not None else np.nan,
-                #     'gw_phi':         gw_sin_model[2]       if gw_sin_model is not None else np.nan,
-                #     'gw_phi_unc':     gw_sin_unc[2]         if gw_sin_unc   is not None else np.nan,
-                #     'gw_k_sin':       gw_sin_model[3]*365.25 if gw_sin_model is not None else np.nan,
-                #     'gw_k_sin_unc':   gw_sin_unc[3]*365.25   if gw_sin_unc   is not None else np.nan,
-                #     # sinusoidal fit: filtered cum  (A in mm, phi in rad, k in mm/yr)
-                #     'vu_A':           cum_sin_model[0]       if cum_sin_model is not None else np.nan,
-                #     'vu_A_unc':       cum_sin_unc[0]         if cum_sin_unc   is not None else np.nan,
-                #     'vu_phi':         cum_sin_model[2]       if cum_sin_model is not None else np.nan,
-                #     'vu_phi_unc':     cum_sin_unc[2]         if cum_sin_unc   is not None else np.nan,
-                #     'vu_k_sin':       cum_sin_model[3]*365.25 if cum_sin_model is not None else np.nan,
-                #     'vu_k_sin_unc':   cum_sin_unc[3]*365.25   if cum_sin_unc   is not None else np.nan,
-                #     # sinusoidal fit: unfiltered cum  (A in mm, phi in rad, k in mm/yr)
-                #     'vu_unfilt_A':          cum_unfilt_sin_model[0]       if cum_unfilt_sin_model is not None else np.nan,
-                #     'vu_unfilt_A_unc':      cum_unfilt_sin_unc[0]         if cum_unfilt_sin_unc   is not None else np.nan,
-                #     'vu_unfilt_phi':        cum_unfilt_sin_model[2]       if cum_unfilt_sin_model is not None else np.nan,
-                #     'vu_unfilt_phi_unc':    cum_unfilt_sin_unc[2]         if cum_unfilt_sin_unc   is not None else np.nan,
-                #     'vu_unfilt_k_sin':      cum_unfilt_sin_model[3]*365.25 if cum_unfilt_sin_model is not None else np.nan,
-                #     'vu_unfilt_k_sin_unc':  cum_unfilt_sin_unc[3]*365.25   if cum_unfilt_sin_unc   is not None else np.nan,
-                # })
+                # 6) append model result
+                model_results.append({
+                    'frame': frame_base,
+                    'well_id': wid,
+                    'lon': lon,
+                    'lat': lat,
+                    # linear fit
+                    'gw_linear':      gw_vel,
+                    'gw_unc_linear':  gw_unc,
+                    'vu_linear':      cum_vel,
+                    'vu_unc_linear':  cum_unc,
+                    # sinusoidal fit: gw  (A in m, phi in rad, k in m/yr)
+                    'gw_amp':         gw_sin_model[0]        if gw_sin_model is not None else np.nan,
+                    'gw_amp_unc':     gw_sin_unc[0]          if gw_sin_unc   is not None else np.nan,
+                    'gw_phi':         gw_sin_model[2]        if gw_sin_model is not None else np.nan,
+                    'gw_phi_unc':     gw_sin_unc[2]          if gw_sin_unc   is not None else np.nan,
+                    'gw_k_sin':       gw_sin_model[3]*365.25 if gw_sin_model is not None else np.nan,
+                    'gw_k_sin_unc':   gw_sin_unc[3]*365.25   if gw_sin_unc   is not None else np.nan,
+                    # sinusoidal fit: filtered cum  (A in mm, phi in rad, k in mm/yr)
+                    'vu_amp':         cum_sin_model[0]        if cum_sin_model is not None else np.nan,
+                    'vu_amp_unc':     cum_sin_unc[0]          if cum_sin_unc   is not None else np.nan,
+                    'vu_phi':         cum_sin_model[2]        if cum_sin_model is not None else np.nan,
+                    'vu_phi_unc':     cum_sin_unc[2]          if cum_sin_unc   is not None else np.nan,
+                    'vu_k_sin':       cum_sin_model[3]*365.25 if cum_sin_model is not None else np.nan,
+                    'vu_k_sin_unc':   cum_sin_unc[3]*365.25   if cum_sin_unc   is not None else np.nan,
+                    # sinusoidal fit: unfiltered cum  (A in mm, phi in rad, k in mm/yr)
+                    'vu_unfilt_amp':        cum_unfilt_sin_model[0]        if cum_unfilt_sin_model is not None else np.nan,
+                    'vu_unfilt_amp_unc':    cum_unfilt_sin_unc[0]          if cum_unfilt_sin_unc   is not None else np.nan,
+                    'vu_unfilt_phi':        cum_unfilt_sin_model[2]        if cum_unfilt_sin_model is not None else np.nan,
+                    'vu_unfilt_phi_unc':    cum_unfilt_sin_unc[2]          if cum_unfilt_sin_unc   is not None else np.nan,
+                    'vu_unfilt_k_sin':      cum_unfilt_sin_model[3]*365.25 if cum_unfilt_sin_model is not None else np.nan,
+                    'vu_unfilt_k_sin_unc':  cum_unfilt_sin_unc[3]*365.25   if cum_unfilt_sin_unc   is not None else np.nan,
+                })
 
                 # 5) plot
                 plotted = plot_ts(sub, cum_ts, cum_dates, wid, frame_base,

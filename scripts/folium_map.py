@@ -79,7 +79,6 @@ norm = mcolors.TwoSlopeNorm(vmin=-1, vcenter=0, vmax=1)
 
 for _, row in df.drop_duplicates(subset=['well_id']).iterrows():
     well_id = row['well_id']
-    # vu_str = f'{row['vu_k_sin']:.3f}'
     vu_str = f"{row['vu_k_sin']:.3f}"
     color = mcolors.to_hex(cmap(norm(row['gw_k_sin'])))
 
