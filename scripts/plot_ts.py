@@ -13,7 +13,7 @@ outputs/
     GWL_VU_ts/                      folder of duo-timeseries plots
         F{frameID}_W{wellID}.png
 data/
-    GWL_VU_wls.csv                  GWL change rate & VU change rate and uncertainties
+    GWL_VU_ModelResult.csv                  GWL change rate & VU change rate and uncertainties
 
 Log:
 Update: 15 Oct 2025 - read in gw data and hdf5 file correclty
@@ -22,6 +22,7 @@ Update: 15 Nov 2025 - WLS fitting function added; plot function updated to show 
 Update: 19 Nov 2025 - WLS fitting function applied and export to csv; plot_ts function updated to add plots of wls results; vel plot function added.
 Update: 16 Mar 2026 - sinusoidal fitting line for time series added.
 Update: 22 Mar 2026 - unfilted cum ts plot as optional; model results append updated.
+Updated 23 Mar 2026 - optional sin component subplot added.
 '''
 
 import os 
@@ -33,6 +34,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mtick
+import matplotlib.dates as mdates
 import seaborn as sns
 import statsmodels.api as sm
 from scipy.optimize import curve_fit
@@ -46,6 +48,7 @@ IN_H5_UNFILT = os.path.join(BASE_DIR, 'data', '*.cum.h5')
 OUT_DIR = os.path.join(BASE_DIR, 'outputs', 'GWL_VU_ts')
 
 PLOT_UNFILT = True
+PLOT_MAP_VIEW = True
 
 os.makedirs(OUT_DIR, exist_ok=True)
 
@@ -203,11 +206,16 @@ def calc_sin(x, y):
 def predict_sin(t, popt):
     A, T, phi, k, c = popt
     return A * np.sin(2 * np.pi * t/T + phi) + k * t + c
+
+def predict_sin_only(t, popt):
+    A, T, phi, k, c = popt
+    return A * np.sin(2 * np.pi * t/T + phi)
     
 def plot_ts(gw_df, cum_ts, cum_dt, wid, frame_base, 
             gw_x=None, gw_model=None, gw_sin_model=None,   
             cum_x=None, cum_model=None, cum_sin_model=None, 
-            cum_unfilt_dt=None, cum_unfilt_ts=None, cum_unfilt_x=None, cum_unfilt_sin_model=None):
+            cum_unfilt_dt=None, cum_unfilt_ts=None, cum_unfilt_x=None, cum_unfilt_sin_model=None,
+            plot_map_view=False):
     '''
     Function to plot groundwater and cum displacement ts
     of coords that located within each hdf5 files
@@ -217,9 +225,34 @@ def plot_ts(gw_df, cum_ts, cum_dt, wid, frame_base,
         return False
 
     # plot
-    fig, ax = plt.subplots(figsize=(12, 7), dpi=120)
+    if plot_map_view:
+        fig = plt.figure(figsize=(12, 10), dpi=120)
+        gs = fig.add_gridspec(2, 1, height_ratios=[1, 2], hspace=0.05)  # fig.add_gridspec(row_n, column_n); hspace = vertical distance between subplots
+        ax_sin = fig.add_subplot(gs[0])
+        ax     = fig.add_subplot(gs[1])
+    else:
+        fig, ax = plt.subplots(figsize=(12, 7), dpi=120)
+        ax_sin = None
+    # fig, ax = plt.subplots(figsize=(12, 7), dpi=120)
     ax2 = ax.twinx()
-    
+
+    # -------------------------------------------------------------------------------
+    # plot if PLOT_MAP_VIEW = True
+    if ax_sin is not None:
+        # GWL detrend
+        if gw_sin_model is not None and gw_x is not None:
+            ax_sin.plot(gw_df['date'], predict_sin_only(gw_x, gw_sin_model), color='navy', linestyle='-', linewidth=1.2, label='GWL sin comp')
+
+        # GWL detrend
+        if cum_sin_model is not None and cum_x is not None:
+            ax_sin.plot(cum_dt, predict_sin_only(cum_x, cum_sin_model), color='black', linestyle='-', linewidth=1.2, label='filt CUM sin comp')
+
+        ax_sin.set_title(f'Frame: {frame_base} | Well ID: {wid}', fontsize=12)
+        ax_sin.set_ylabel('Amplitude', fontsize=12)
+        ax_sin.legend(loc='upper right', fontsize=9)
+        ax_sin.xaxis.set_major_locator(mdates.YearLocator())
+        ax_sin.xaxis.set_major_formatter(mdates.DateFormatter('%Y'))
+        plt.setp(ax_sin.get_xticklabels(), visible=False)
     # -------------------------------------------------------------------------------
     # plot cum.h5
     if cum_unfilt_ts is not None and cum_unfilt_dt is not None:
@@ -229,7 +262,7 @@ def plot_ts(gw_df, cum_ts, cum_dt, wid, frame_base,
             label='cum.h5')
         
     # sin model
-    if (cum_unfilt_sin_model is not None) and (cum_unfilt_x is not None):
+    if cum_unfilt_sin_model is not None and cum_unfilt_x is not None:
         cum_unfilt_sin_y = predict_sin(cum_unfilt_x, cum_unfilt_sin_model)   # sinusoidal line
         ax2.plot(cum_unfilt_dt, cum_unfilt_sin_y, color='grey', linestyle='-', linewidth=1.2, label='sinusoidal fit: cum.h5')
         cum_unfilt_sin_slope = cum_unfilt_sin_model[3] * cum_unfilt_x + cum_unfilt_sin_model[4]  # slope line
@@ -243,7 +276,7 @@ def plot_ts(gw_df, cum_ts, cum_dt, wid, frame_base,
         label='cum_filt_deramp.h5')
 
     # sin model
-    if (cum_sin_model is not None) and (cum_x is not None):
+    if cum_sin_model is not None and cum_x is not None:
         cum_sin_y = predict_sin(cum_x, cum_sin_model)   # sinusoidal line
         ax2.plot(cum_dt, cum_sin_y, color='black', linestyle='-', linewidth=1.2, label='sinusoidal fit: cum_filt_deramp.h5')
         cum_sin_slope = cum_sin_model[3] * cum_x + cum_sin_model[4]  # slope line
@@ -254,7 +287,7 @@ def plot_ts(gw_df, cum_ts, cum_dt, wid, frame_base,
         #         verticalalignment='top')
 
     # # linear model
-    # if (cum_model is not None) and (cum_x is not None):
+    # if cum_model is not None and cum_x is not None:
     #     cum_y_fit = cum_model.predict(sm.add_constant(cum_x))
     #     ax2.plot(cum_dt, cum_y_fit, color='black', linestyle='--', linewidth=1.0, label='linear fit: cum_filt_deramp.h5')
     #     # ax2.text(0.75, 0.83, f'$VU_{{lin}} = {k:.3f} t + {c:.2f}$',
@@ -269,7 +302,7 @@ def plot_ts(gw_df, cum_ts, cum_dt, wid, frame_base,
         label='Groundwater Level')
     
     # sin model
-    if (gw_sin_model is not None) and (gw_x is not None):
+    if gw_sin_model is not None and gw_x is not None:
         gw_sin_y = predict_sin(gw_x, gw_sin_model)  # sinusoidal line
         ax.plot(gw_df['date'], gw_sin_y, color='navy', linestyle='-', linewidth=1.2, label='sinusoidal fit: GWL')
         gw_sin_slope = gw_sin_model[3] * gw_x + gw_sin_model[4]  # slope line
@@ -281,7 +314,7 @@ def plot_ts(gw_df, cum_ts, cum_dt, wid, frame_base,
         #         verticalalignment='top')
 
     # # linear model
-    # if (gw_model is not None) and (gw_x is not None):
+    # if gw_model is not None and gw_x is not None:
     #     gw_y_fit = gw_model.predict(sm.add_constant(gw_x))
     #     ax.plot(gw_df['date'], gw_y_fit, color='navy', linestyle='--', linewidth=1.0, label='linear fit: GWL')
     #     # k, c = gw_model.params[1], gw_model.params[0]
@@ -291,10 +324,11 @@ def plot_ts(gw_df, cum_ts, cum_dt, wid, frame_base,
 
     # -------------------------------------------------------------------------------
     # ax settings
-    ax.set_title(f'Well ID: {wid} Frame: {frame_base}', fontsize=12)
+    if ax_sin is None:
+        ax.set_title(f'Frame: {frame_base} | Well ID: {wid}', fontsize=12)
     ax.set_xlabel('Time', fontsize=12)
 
-    ax.grid(False)
+    # ax.grid(False)
     ax2.grid(False)
 
     ax.set_ylabel('Ground Water Level (m)', color='navy', fontsize=12)
@@ -314,6 +348,9 @@ def plot_ts(gw_df, cum_ts, cum_dt, wid, frame_base,
     cum_centre = np.median(cum_ts[~np.isnan(cum_ts)])
     ax2.set_ylim(cum_centre - 50, cum_centre + 30)
 
+    ax.xaxis.set_major_locator(mdates.YearLocator())
+    ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y'))
+
     ax.ticklabel_format(style='plain', axis='y', useOffset=False)
     ax.tick_params(axis='y', colors='navy')
     ax.yaxis.set_major_formatter(mtick.FormatStrFormatter('%.2f'))  # keep 2 decimal places 
@@ -332,8 +369,8 @@ def plot_ts(gw_df, cum_ts, cum_dt, wid, frame_base,
 
 def plot_reg(df):
     # convert to float
-    gw_vel = df['gw_vel'].values.astype(float)
-    cum_vel = df['cum_vel'].values.astype(float)
+    gw_vel = df['gw_k_sin'].values.astype(float)
+    cum_vel = df['vu_k_sin'].values.astype(float)
 
     # call WLS fitting
     rel_model = calc_wls(cum_vel, gw_vel)
@@ -384,7 +421,11 @@ def plot_reg(df):
 
 
 if __name__ == '__main__':
-    print('Start.')
+    if PLOT_UNFILT:
+        print('--PLOT_UNFILT: plotting unfilted cum as well.')
+    if PLOT_MAP_VIEW: 
+        print('--PLOT_MAP_VIEW: plotting as map view.')
+    print('----- Start. -----')
     # load csv
     df = load_gw_obs_csv(IN_CSV)
 
@@ -508,46 +549,47 @@ if __name__ == '__main__':
                     cum_unfilt_sin_result = calc_sin(cum_unfilt_x, cum_unfilt_ts)
                     cum_unfilt_sin_model, cum_unfilt_sin_unc = cum_unfilt_sin_result if cum_unfilt_sin_result is not None else (None, None)
 
-                # 6) append model result
-                model_results.append({
-                    'frame': frame_base,
-                    'well_id': wid,
-                    'lon': lon,
-                    'lat': lat,
-                    # linear fit
-                    'gw_cr_linear':   gw_vel,
-                    'gw_unc_linear':  gw_unc,
-                    'vu_linear':      cum_vel,
-                    'vu_unc_linear':  cum_unc,
-                    # sinusoidal fit: gw  (A in m, phi in rad, k in m/yr)
-                    'gw_A':           gw_sin_model[0]       if gw_sin_model is not None else np.nan,
-                    'gw_A_unc':       gw_sin_unc[0]         if gw_sin_unc   is not None else np.nan,
-                    'gw_phi':         gw_sin_model[2]       if gw_sin_model is not None else np.nan,
-                    'gw_phi_unc':     gw_sin_unc[2]         if gw_sin_unc   is not None else np.nan,
-                    'gw_k_sin':       gw_sin_model[3]*365.25 if gw_sin_model is not None else np.nan,
-                    'gw_k_sin_unc':   gw_sin_unc[3]*365.25   if gw_sin_unc   is not None else np.nan,
-                    # sinusoidal fit: filtered cum  (A in mm, phi in rad, k in mm/yr)
-                    'vu_A':           cum_sin_model[0]       if cum_sin_model is not None else np.nan,
-                    'vu_A_unc':       cum_sin_unc[0]         if cum_sin_unc   is not None else np.nan,
-                    'vu_phi':         cum_sin_model[2]       if cum_sin_model is not None else np.nan,
-                    'vu_phi_unc':     cum_sin_unc[2]         if cum_sin_unc   is not None else np.nan,
-                    'vu_k_sin':       cum_sin_model[3]*365.25 if cum_sin_model is not None else np.nan,
-                    'vu_k_sin_unc':   cum_sin_unc[3]*365.25   if cum_sin_unc   is not None else np.nan,
-                    # sinusoidal fit: unfiltered cum  (A in mm, phi in rad, k in mm/yr)
-                    'vu_unfilt_A':          cum_unfilt_sin_model[0]       if cum_unfilt_sin_model is not None else np.nan,
-                    'vu_unfilt_A_unc':      cum_unfilt_sin_unc[0]         if cum_unfilt_sin_unc   is not None else np.nan,
-                    'vu_unfilt_phi':        cum_unfilt_sin_model[2]       if cum_unfilt_sin_model is not None else np.nan,
-                    'vu_unfilt_phi_unc':    cum_unfilt_sin_unc[2]         if cum_unfilt_sin_unc   is not None else np.nan,
-                    'vu_unfilt_k_sin':      cum_unfilt_sin_model[3]*365.25 if cum_unfilt_sin_model is not None else np.nan,
-                    'vu_unfilt_k_sin_unc':  cum_unfilt_sin_unc[3]*365.25   if cum_unfilt_sin_unc   is not None else np.nan,
-                })
+                # # 6) append model result
+                # model_results.append({
+                #     'frame': frame_base,
+                #     'well_id': wid,
+                #     'lon': lon,
+                #     'lat': lat,
+                #     # linear fit
+                #     'gw_cr_linear':   gw_vel,
+                #     'gw_unc_linear':  gw_unc,
+                #     'vu_linear':      cum_vel,
+                #     'vu_unc_linear':  cum_unc,
+                #     # sinusoidal fit: gw  (A in m, phi in rad, k in m/yr)
+                #     'gw_A':           gw_sin_model[0]       if gw_sin_model is not None else np.nan,
+                #     'gw_A_unc':       gw_sin_unc[0]         if gw_sin_unc   is not None else np.nan,
+                #     'gw_phi':         gw_sin_model[2]       if gw_sin_model is not None else np.nan,
+                #     'gw_phi_unc':     gw_sin_unc[2]         if gw_sin_unc   is not None else np.nan,
+                #     'gw_k_sin':       gw_sin_model[3]*365.25 if gw_sin_model is not None else np.nan,
+                #     'gw_k_sin_unc':   gw_sin_unc[3]*365.25   if gw_sin_unc   is not None else np.nan,
+                #     # sinusoidal fit: filtered cum  (A in mm, phi in rad, k in mm/yr)
+                #     'vu_A':           cum_sin_model[0]       if cum_sin_model is not None else np.nan,
+                #     'vu_A_unc':       cum_sin_unc[0]         if cum_sin_unc   is not None else np.nan,
+                #     'vu_phi':         cum_sin_model[2]       if cum_sin_model is not None else np.nan,
+                #     'vu_phi_unc':     cum_sin_unc[2]         if cum_sin_unc   is not None else np.nan,
+                #     'vu_k_sin':       cum_sin_model[3]*365.25 if cum_sin_model is not None else np.nan,
+                #     'vu_k_sin_unc':   cum_sin_unc[3]*365.25   if cum_sin_unc   is not None else np.nan,
+                #     # sinusoidal fit: unfiltered cum  (A in mm, phi in rad, k in mm/yr)
+                #     'vu_unfilt_A':          cum_unfilt_sin_model[0]       if cum_unfilt_sin_model is not None else np.nan,
+                #     'vu_unfilt_A_unc':      cum_unfilt_sin_unc[0]         if cum_unfilt_sin_unc   is not None else np.nan,
+                #     'vu_unfilt_phi':        cum_unfilt_sin_model[2]       if cum_unfilt_sin_model is not None else np.nan,
+                #     'vu_unfilt_phi_unc':    cum_unfilt_sin_unc[2]         if cum_unfilt_sin_unc   is not None else np.nan,
+                #     'vu_unfilt_k_sin':      cum_unfilt_sin_model[3]*365.25 if cum_unfilt_sin_model is not None else np.nan,
+                #     'vu_unfilt_k_sin_unc':  cum_unfilt_sin_unc[3]*365.25   if cum_unfilt_sin_unc   is not None else np.nan,
+                # })
 
                 # 5) plot
                 plotted = plot_ts(sub, cum_ts, cum_dates, wid, frame_base,
                                   gw_x=gw_x, gw_model=gw_model, gw_sin_model=gw_sin_model,
                                   cum_x=cum_x, cum_model=cum_model, cum_sin_model=cum_sin_model,
                                   cum_unfilt_dt=cum_unfilt_dt, cum_unfilt_ts=cum_unfilt_ts,
-                                  cum_unfilt_x=cum_unfilt_x, cum_unfilt_sin_model=cum_unfilt_sin_model)
+                                  cum_unfilt_x=cum_unfilt_x, cum_unfilt_sin_model=cum_unfilt_sin_model,
+                                  plot_map_view=PLOT_MAP_VIEW)
                 if plotted:
                     frame_plotted += 1 
                     
@@ -556,13 +598,13 @@ if __name__ == '__main__':
         
     print(f'total wells plotted {well_plotted} / {len(wells)} wells.')
 
-    # 6.2 export results to csv
-    model_pd = pd.DataFrame(model_results)
-    out_csv = os.path.join(BASE_DIR, 'data', 'GWLcr_VU_ModelResult.csv')
-    model_pd.to_csv(out_csv, index=False)
-    print(f'Output csv saved to {out_csv}.')
+    # # 6.2 export results to csv
+    # model_pd = pd.DataFrame(model_results)
+    # out_csv = os.path.join(BASE_DIR, 'data', 'GWLcr_VU_ModelResult.csv')
+    # model_pd.to_csv(out_csv, index=False)
+    # print(f'Output csv saved to {out_csv}.')
 
-    # 6) plot GWL change rate vs vu change rate
-    # plot_reg(wls_pd)
+    # 7) plot GWL change rate vs vu change rate
+    # plot_reg(model_pd)
 
     print('Finished.')
