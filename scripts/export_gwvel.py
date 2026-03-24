@@ -1,9 +1,9 @@
 import rasterio
 import numpy as np
 
-vu_file = '/exports/geos.ed.ac.uk/comet/lliang/GOBI_proj/data/vu_all.tif'
+vu_file = '/exports/geos.ed.ac.uk/comet/lliang/GOBI_proj/data/vu_AHB.tif'
 # vu_file = '/exports/geos.ed.ac.uk/comet/lliang/GOBI_proj/data/vu_Qi_fillnodata.tif'
-gw_vel_tif = '/exports/geos.ed.ac.uk/comet/lliang/GOBI_proj/outputs/gw_vel_all.tif'
+gw_vel_tif = '/exports/geos.ed.ac.uk/comet/lliang/GOBI_proj/data/gwl_cr_all.tif'
 
 
 with rasterio.open(vu_file) as src:
@@ -15,7 +15,7 @@ with rasterio.open(vu_file) as src:
     mask = (vu == nodata) | np.isnan(vu)
 
 
-    gw_vel = 0.0527 * vu - 0.1639
+    gw_vel = 0.0469 * vu -0.1266
     gw_vel = gw_vel.astype("float32")
     gw_vel[mask] = nodata
 
