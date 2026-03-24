@@ -47,8 +47,8 @@ IN_H5 = os.path.join(BASE_DIR, 'data', '*.cum_filt_deramp.h5')
 IN_H5_UNFILT = os.path.join(BASE_DIR, 'data', '*.cum.h5')
 OUT_DIR = os.path.join(BASE_DIR, 'outputs', 'GWL_VU_ts')
 
-PLOT_UNFILT = True
-PLOT_MAP_VIEW = True
+PLOT_UNFILT = False
+PLOT_MAP_VIEW = False
 
 os.makedirs(OUT_DIR, exist_ok=True)
 
@@ -393,7 +393,7 @@ def plot_reg(df):
 
     # plot scatter and errorbar
     # plt.errorbar(cum_vel, gw_vel, xerr=cum_unc, yerr=gw_unc, fmt='none', ecolor='lightgrey', elinewidth=0.8, capsize=2, alpha=0.5)
-    sns.scatterplot(data=df, x='cum_vel', y='gw_vel', hue='frame', palette='Set2', edgecolor='dimgray', s=40, alpha=0.7)
+    sns.scatterplot(data=df, x=cum_vel, y=gw_vel, hue='frame', palette='Set2', edgecolor='dimgray', s=40, alpha=0.7)
     # sns.jointplot(data=wls_pd, x='cum_vel', y='gw_vel', kind='reg', truncate=False)
     
     # plot WLS line
@@ -598,13 +598,14 @@ if __name__ == '__main__':
         
     print(f'total wells plotted {well_plotted} / {len(wells)} wells.')
 
-    # # 6.2 export results to csv
-    # model_pd = pd.DataFrame(model_results)
-    # out_csv = os.path.join(BASE_DIR, 'data', 'GWLcr_VU_ModelResult.csv')
-    # model_pd.to_csv(out_csv, index=False)
-    # print(f'Output csv saved to {out_csv}.')
+    # 6.2 export results to csv
+    model_pd = pd.DataFrame(model_results)
+    out_csv = os.path.join(BASE_DIR, 'data', 'GWLcr_VU_ModelResult.csv')
+    model_pd.to_csv(out_csv, index=False)
+    print(f'Output csv saved to {out_csv}.')
 
     # 7) plot GWL change rate vs vu change rate
-    # plot_reg(model_pd)
+    # model_df = pd.read_csv(os.path.join(BASE_DIR, 'data', 'GWLcr_VU_ModelResult.csv'))
+    plot_reg(model_pd)
 
     print('Finished.')
