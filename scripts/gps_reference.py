@@ -25,13 +25,15 @@ import warnings
 from osgeo import gdal
 from shapely.geometry import Point
 from shapely.geometry import box
+from cmcrameri import cm
+
 
 # gdal.UseExceptions()
 warnings.filterwarnings("ignore")
 
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
-IN_TIF = os.path.join(BASE_DIR, 'data', 'vu_John_new.tif')
+IN_TIF = os.path.join(BASE_DIR, 'data', 'vu_AHB.tif')
 # IN_GPS = os.path.join(BASE_DIR, 'data', 'ahbgps_v6pt4_3D_29-Nov-2025_eu.dat')
 IN_GPS = os.path.join(BASE_DIR, 'data', 'GPS_merge.csv')
 
@@ -301,8 +303,8 @@ if __name__ == '__main__':
         data[data == src.nodata] = np.nan
 
         fig, ax = plt.subplots(figsize=(10, 8))
-        im = ax.imshow(data, vmin=vmin, vmax=vmax, extent=EXTENT_FOR_PLOT)
-        gps_shiyang.plot(ax=ax, c=gps_shiyang['vu'], vmin=vmin, vmax=vmax, markersize=60, edgecolor='k')
+        im = ax.imshow(data, vmin=vmin, vmax=vmax, cmap=cm.roma, extent=EXTENT_FOR_PLOT)
+        gps_shiyang.plot(ax=ax, c=gps_shiyang['vu'], vmin=vmin, vmax=vmax, cmap=cm.roma, markersize=60, edgecolor='k')
         plt.colorbar(im, ax=ax, label='mm/yr')
         ax.set_title('Referenced Vu')
         plt.savefig(os.path.join(OUT_DIR, '5.gps_on_ref_vu.png'), dpi=150, bbox_inches='tight')
