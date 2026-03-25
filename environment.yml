@@ -12,3 +12,11 @@ dependencies:
   - matplotlib
   - seaborn
   - rasterio
+  - scipy
+  - geopandas
+  - gdal
+  - folium
+  - pillow
+  - requests
+  - pip:
+    - cmcrameri

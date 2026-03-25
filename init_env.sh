@@ -2,22 +2,19 @@
 
 ENV_NAME="gobi"
 
-# 1) 检查 conda 命令是否可用
+# check conda
 if ! command -v conda >/dev/null 2>&1; then
-    echo "❌ conda 命令不存在。请先打开一个已初始化 conda 的终端，或检查 mambaforge 安装。"
+    echo "Error: conda not found. Please install Miniconda or Anaconda first."
     return 1 2>/dev/null || exit 1
 fi
 
-# 2) 如果环境不存在，就根据 environment.yml 创建
+# if env not exist, then create
 if ! conda env list | awk '{print $1}' | grep -qx "$ENV_NAME"; then
-    echo "🔧 未找到环境：$ENV_NAME，正在根据 environment.yml 创建..."
+    echo "Creating conda environment '$ENV_NAME'..."
     conda env create -f environment.yml
 else
-    echo "✅ conda 环境 $ENV_NAME 已存在，跳过创建。"
+    echo "Conda environment '$ENV_NAME' already exists, skipping creation."
 fi
 
-# 3) 激活环境
-echo "🔄 正在激活 conda 环境：$ENV_NAME ..."
+echo "Activating environment '$ENV_NAME'..."
 conda activate "$ENV_NAME"
-
-echo "✅ conda 环境 $ENV_NAME 已就绪。"
