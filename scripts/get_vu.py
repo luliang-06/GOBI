@@ -1,23 +1,56 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-
 '''
-3 Nov 25 updated: export cumU as GeoTiff added.
-5 Nov 25 updated: file directory changed.
-19 Nov 25 updated: division function updated.
+Written by Lu Liang, University of Edinburgh, School of Geosciences, 2025.
+
+===========
+Description
+===========
+This script do the division between 'cum' and 'U.geo' of input hdf5 files to get vertical cum displacement.
+The results of division ('cumU' & 'velU') will be stored in the same hdf5 file imported.
+
+============
+Inputs Files
+============
+data/
+    *.cum_filt_deramp.h5
+
+============
+Output Files
+============
+data/
+    *.cum_filt_deramp.h5
+outputs/
+    cumU_tif/
+        *.filt_deramp_cumU.h5
+'''
+# Change Log
+'''
+v1.1 20251119, Lu Liang, UoE
+ - division function updated.
+v1.0.1 20251105, Lu Liang, UoE
+ - file directory changed.
+v1.0 20251103, Lu Liang, UoE
+ - export cumU as GeoTiff function added.
 '''
 
 import os
+import sys
 import h5py
 import glob
+import time
 import rasterio
 import numpy as np
 from rasterio.transform import from_bounds
 
+author = 'Lu Liang, University of Edinburgh, School of Geosciences'
+ver = 'v1.1'
+last_update = '2025-11-19'
+
 # path setting
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 DATA_DIR = os.path.join(BASE_DIR, 'data')
-OUT_DIR = os.path.join(BASE_DIR, 'outputs')
+OUT_DIR = os.path.join(BASE_DIR, 'outputs', 'cumU_tif')
 
 os.makedirs(OUT_DIR, exist_ok=True)
 
@@ -70,6 +103,9 @@ def write_tif(cumU, transform, out_cumU_tif):
 
 
 if __name__ == '__main__':
+    # Start 
+    start = time.time()
+    print('\n{} ver{} {} {}'.format(os.path.basename(sys.argv[0]), ver, last_update, author))
 
     for f in h5_list:
         base = os.path.basename(f)[:-len(H5_SUFFIX)]
@@ -119,4 +155,10 @@ if __name__ == '__main__':
             out_tif = os.path.join(OUT_DIR, f'{base}.filt_deramp_cumU.tif')
             write_tif(cumU_last, transform, out_tif)
 
-    print('Finished.')
+    # Finish
+    elapsed = time.time() - start
+    h = int(elapsed / 3600)
+    m = int((elapsed % 3600) / 60)
+    s = int(elapsed % 60)
+    print('\nElapsed time: {:02}h {:02}m {:02}s'.format(h, m, s))
+    print('\n{} successfully finished!\n'.format(os.path.basename(sys.argv[0])))

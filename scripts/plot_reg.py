@@ -1,12 +1,36 @@
-
+#!/usr/bin/env python3
 '''
-Script to plot regression between GW change rate and VU
+Written by Lu Liang, University of Edinburgh, School of Geosciences, 2025.
 
-Inputs: gw_vel.csv; VU.tif
-Outputs: GW_vel_VU.png
+===========
+Description
+===========
+Script to plot regression between GW change rate and VU
+plot regression of csv and a single tif
+
+============
+Inputs Files
+============
+data/
+    2018-2022_ShiyangBasin_Groundwater_WaterLevel_FIXED.csv
+    vu_shiyang_referenced.tif
+
+============
+Output Files
+============
+outputs/
+    GWcr_vs_VUall.png
+'''
+# Change Log
+'''
+v1.0.1 20251217, Lu Liang, UoE
+ - bug fixed on importing files
+v1.0 20251214, Lu Liang, UoE
 '''
 
 import os 
+import sys
+import time
 import numpy as np
 import pandas as pd
 import seaborn as sns
@@ -17,12 +41,20 @@ import statsmodels.api as sm
 from plot_ts import load_gw_obs_csv, calc_wls
 from gps_reference import OpenTif
 
+author = 'Lu Liang, University of Edinburgh, School of Geosciences'
+ver = 'v1.0.1'
+last_update = '2025-12-17'
+
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 IN_GW = os.path.join(BASE_DIR, 'data', '2018-2022_ShiyangBasin_Groundwater_WaterLevel_FIXED.csv')
 IN_VU = os.path.join(BASE_DIR, 'data', 'vu_shiyang_referenced.tif')
 OUT_DIR = os.path.join(BASE_DIR, 'outputs')
 os.makedirs(OUT_DIR, exist_ok=True)   
+
+# Start
+start = time.time()
+print('\n{} ver{} {} {}'.format(os.path.basename(sys.argv[0]), ver, last_update, author))
 
 # plot settings
 # sns.set_theme(style="whitegrid", context="talk", rc={"grid.linewidth": 0.8})
@@ -31,7 +63,6 @@ plt.rcParams['font.family'] = 'sans-serif'
 plt.rcParams['font.sans-serif'] = ['DejaVu Sans']
 plt.rcParams['xtick.labelsize'] = 12
 plt.rcParams['ytick.labelsize'] = 12
-
 
 
 gw_df = load_gw_obs_csv(IN_GW)
@@ -103,8 +134,16 @@ plt.ylabel('groundwater change rate (m/yr)', fontsize=12)
 plt.title('VU vs groundwater Change Rate', fontsize=14)
 
 # save plot
-out_vel_plot = os.path.join(BASE_DIR, 'outputs', 'GW_vs_JohnVU_.png')
+out_vel_plot = os.path.join(BASE_DIR, 'outputs', 'GWLct_vs_VUall.png')
 plt.tight_layout()
 plt.savefig(out_vel_plot)
 plt.close()
 print(f'GW vs Cum velocity scatter saved to {out_vel_plot}.')
+
+# Finish
+elapsed = time.time() - start
+h = int(elapsed / 3600)
+m = int((elapsed % 3600) / 60)
+s = int(elapsed % 60)
+print('\nElapsed time: {:02}h {:02}m {:02}s'.format(h, m, s))
+print('\n{} successfully finished!\n'.format(os.path.basename(sys.argv[0])))

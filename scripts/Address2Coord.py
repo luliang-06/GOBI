@@ -1,6 +1,44 @@
-import pandas as pd
-import requests
+#!/usr/bin/env python3
+'''
+Written by Lu Liang, University of Edinburgh, School of Geosciences, 2025.
+
+===========
+Description
+===========
+Script to transfer Chinese address into coordinations through Amap API: 
+https://lbs.amap.com/api/webservice/guide/api/georegeo
+
+============
+Inputs Files
+============
+local/
+    address.xlsx
+
+============
+Output Files
+============
+local/
+    address_with_latlng.xlsx
+'''
+# Change Log
+'''
+v1.0 20251215, Lu Liang, UoE
+'''
+
+import os
+import sys
 import time
+import requests
+import pandas as pd
+
+author = 'Lu Liang, University of Edinburgh, School of Geosciences'
+ver = 'v1.0'
+last_update = '2025-12-15'
+
+# Start
+start = time.time()
+print('\n{} ver{} {} {}'.format(os.path.basename(sys.argv[0]), ver, last_update, author))
+
 
 # 你的高德API key
 api_key = '051288489242c002525e170828eadb1b'
@@ -43,3 +81,11 @@ for idx, row in df.iterrows():
 output_file = 'address_with_latlng.xlsx'
 df.to_excel(output_file, index=False)
 print(f"全部完成，已输出到：{output_file}")
+
+# Finish
+elapsed = time.time() - start
+h = int(elapsed / 3600)
+m = int((elapsed % 3600) / 60)
+s = int(elapsed % 60)
+print('\nElapsed time: {:02}h {:02}m {:02}s'.format(h, m, s))
+print('\n{} successfully finished!\n'.format(os.path.basename(sys.argv[0])))

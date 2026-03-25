@@ -1,33 +1,56 @@
-
+#!/usr/bin/env python3
 '''
-Scripts to plot time series of of groundwater and cummulative deformation.
+Written by Lu Liang, University of Edinburgh, School of Geosciences, 2025.
 
-Inputs:
+===========
+Description
+===========
+This scripts plot time series of groundwater level and cummulative deformation.
+Do the linear or sinusoidal model of time seires and plot the seasonal components (if sinusoidal model applied)
+Export the model fit results into a csv.
+Plot the regression between groundwater level and Vu while return a function between tow parameters.
+
+============
+Inputs Files
+============
 data/
     2018-2022_ShiyangBasin_Grounswater_EaterLevel_FIXED.csv
     fid*.cum.h5
 
-Outputs:
+=============
+Outputs Files
+=============
 outputs/
-    GWLvsVU.png                     scatter plot between GWL & VU
-    GWL_VU_ts/                      folder of duo-timeseries plots
+    GWL_VU_ts/
         F{frameID}_W{wellID}.png
+    GWLvsVU.png
 data/
-    GWL_VU_ModelResult.csv                  GWL change rate & VU change rate and uncertainties
-
-Log:
-Update: 15 Oct 2025 - read in gw data and hdf5 file correclty
-Update: 28 Oct 2025 - plot ts of cum and ground water for specific well
-Update: 15 Nov 2025 - WLS fitting function added; plot function updated to show gw AND cum.
-Update: 19 Nov 2025 - WLS fitting function applied and export to csv; plot_ts function updated to add plots of wls results; vel plot function added.
-Update: 16 Mar 2026 - sinusoidal fitting line for time series added.
-Update: 22 Mar 2026 - unfilted cum ts plot as optional; model results append updated.
-Updated 23 Mar 2026 - optional sin component subplot added.
+    GWL_VU_ModelResult.csv
 '''
+# Change Log:
+'''
+v1.3.2 20260323, Lu Liang, UoE
+ - optional sin component subplot added as optional.
+v1.3.1 20260322, Lu Liang, UoE
+ - unfilted cum ts plot as optional; model results append updated.
+v1.3 20260316, Lu Liang, UoE
+ - sinusoidal fitting line for time series added.
+v1.2.1 20251119, Lu Liang, UoE
+ - WLS fitting function applied and export to csv; plot_ts function updated to add plots of wls results; vel plot function added.
+v1.2 20251115, Lu Liang, UoE
+ - WLS fitting function added; plot function updated to show gw AND cum.
+v1.1 20251028, Lu Liang, UoE
+ - time series plot of cum and groundwater level for specific well.
+v1.0 20251015, Lu Liang, UoE
+ - csv & tif read in module created.
+'''
+
 
 import os 
 import re
+import sys
 import glob
+import time
 import datetime
 import h5py as h5
 import numpy as np
@@ -39,6 +62,9 @@ import seaborn as sns
 import statsmodels.api as sm
 from scipy.optimize import curve_fit
 
+author = 'Lu Liang, University of Edinburgh, School of Geosciences'
+ver = 'v1.3.1'
+last_update = '2026-03-23'
 
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
@@ -48,7 +74,7 @@ IN_H5_UNFILT = os.path.join(BASE_DIR, 'data', '*.cum.h5')
 OUT_DIR = os.path.join(BASE_DIR, 'outputs', 'GWL_VU_ts')
 
 PLOT_UNFILT = True
-PLOT_MAP_VIEW = True
+PLOT_SEASON_COMP = True
 
 os.makedirs(OUT_DIR, exist_ok=True)
 
@@ -215,7 +241,7 @@ def plot_ts(gw_df, cum_ts, cum_dt, wid, frame_base,
             gw_x=None, gw_model=None, gw_sin_model=None,   
             cum_x=None, cum_model=None, cum_sin_model=None, 
             cum_unfilt_dt=None, cum_unfilt_ts=None, cum_unfilt_x=None, cum_unfilt_sin_model=None,
-            plot_map_view=False):
+            plot_seas_comp=False):
     '''
     Function to plot groundwater and cum displacement ts
     of coords that located within each hdf5 files
@@ -225,7 +251,7 @@ def plot_ts(gw_df, cum_ts, cum_dt, wid, frame_base,
         return False
 
     # plot
-    if plot_map_view:
+    if plot_seas_comp:
         fig = plt.figure(figsize=(12, 10), dpi=120)
         gs = fig.add_gridspec(2, 1, height_ratios=[1, 2], hspace=0.05)  # fig.add_gridspec(row_n, column_n); hspace = vertical distance between subplots
         ax_sin = fig.add_subplot(gs[0])
@@ -237,7 +263,7 @@ def plot_ts(gw_df, cum_ts, cum_dt, wid, frame_base,
     ax2 = ax.twinx()
 
     # -------------------------------------------------------------------------------
-    # plot if PLOT_MAP_VIEW = True
+    # plot if PLOT_SEASON_COMP = True
     if ax_sin is not None:
         # GWL detrend
         if gw_sin_model is not None and gw_x is not None:
@@ -430,12 +456,16 @@ def plot_reg(df):
 
 
 if __name__ == '__main__':
+    # start
+    start = time.time()
+    print('\n{} ver{} {} {}'.format(os.path.basename(sys.argv[0]), ver, last_update, author))
     if PLOT_UNFILT:
-        print('--PLOT_UNFILT: plotting unfilted cum as well.')
-    if PLOT_MAP_VIEW: 
-        print('--PLOT_MAP_VIEW: plotting as map view.')
+        print(' --INFO-- PLOT_UNFILT: plotting unfilted cum as well.')
+    if PLOT_SEASON_COMP: 
+        print(' --INFO-- PLOT_SEASON_COMP: plotting seasonal components.')
     print('----- Start. -----')
-    # load csv
+    
+    # 1) load csv
     df = load_gw_obs_csv(IN_CSV)
 
     # 2) Wells and groups
@@ -448,7 +478,6 @@ if __name__ == '__main__':
 
     # create a container for wls results
     model_results = []
-
 
     # 3) load hdf5 files
     # 3.1 get h5 filenames
@@ -598,7 +627,7 @@ if __name__ == '__main__':
                                   cum_x=cum_x, cum_model=cum_model, cum_sin_model=cum_sin_model,
                                   cum_unfilt_dt=cum_unfilt_dt, cum_unfilt_ts=cum_unfilt_ts,
                                   cum_unfilt_x=cum_unfilt_x, cum_unfilt_sin_model=cum_unfilt_sin_model,
-                                  plot_map_view=PLOT_MAP_VIEW)
+                                  plot_seas_comp=PLOT_SEASON_COMP)
                 if plotted:
                     frame_plotted += 1 
                     
@@ -617,4 +646,10 @@ if __name__ == '__main__':
     # model_df = pd.read_csv(os.path.join(BASE_DIR, 'data', 'GWLcr_VU_ModelResult.csv'))
     plot_reg(model_pd)
 
-    print('Finished.')
+    # Finish
+    elapsed = time.time() - start
+    h = int(elapsed / 3600)
+    m = int((elapsed % 3600) / 60)
+    s = int(elapsed % 60)
+    print('\nElapsed time: {:02}h {:02}m {:02}s'.format(h, m, s))
+    print('\n{} successfully finished!\n'.format(os.path.basename(sys.argv[0])))

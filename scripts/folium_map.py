@@ -1,20 +1,40 @@
-
+#!/usr/bin/env python3
 '''
+Written by Lu Liang, University of Edinburgh, School of Geosciences, 2026.
+
+===========
+Description
+===========
 Script to generate a folium interactive html of vu.tif as base and well location as point with timeseries pop up.
 
-Inputs:
-data/vu_shiyang.tif
-data/GWLcr_VU_ModelResult.csv
-outputs/GWL_VU_ts/*.png
+============
+Inputs Files
+============
+data/
+    vu_shiyang.tif
+    GWLcr_VU_ModelResult.csv
+outputs/
+    GWL_VU_ts/
+        *.png
 
-Outputs:
-outputs/map.html
-
-
+============
+Output Files
+============
+outputs/
+    map.html
+'''
+# Change Log
+'''
+v1.1 20260325, Lu Liang, UoE
+ - figure size reduced using pillow to reduce loading time on html.
+v1.0 20260323, Lu Liang, UoE
+ - generate folium html map
 '''
 
 import os
 import io
+import sys
+import time
 import folium
 import rasterio
 import glob
@@ -25,6 +45,10 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
 from PIL import Image
 
+author = 'Lu Liang, University of Edinburgh, School of Geosciences'
+ver = 'v1.1'
+last_update = '2026-03-25'
+
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 # IN_VU = os.path.join(BASE_DIR, 'data', 'vu_John_new.tif')
 IN_VU = os.path.join(BASE_DIR, 'data', 'vu_shiyang.tif')
@@ -32,6 +56,10 @@ IN_GW = os.path.join(BASE_DIR, 'data', 'GWLcr_VU_ModelResult.csv')
 TS_DIR = os.path.join(BASE_DIR, 'outputs', 'GWL_VU_ts')
 BOUND = [101.7, 37.3, 104.7, 39.3] # left, bottom, right, top
 OUT_DIR = os.path.join(BASE_DIR, 'outputs')
+
+# start
+start = time.time()
+print('\n{} ver{} {} {}'.format(os.path.basename(sys.argv[0]), ver, last_update, author))
 
 # open tif as baselayer
 with rasterio.open(IN_VU) as src:
@@ -115,4 +143,11 @@ for _, row in df.drop_duplicates(subset=['well_id']).iterrows():
 
 out_map = os.path.join(OUT_DIR, 'map.html')
 m.save(out_map)
-print('Finished.')
+
+# Finish
+elapsed = time.time() - start
+h = int(elapsed / 3600)
+m = int((elapsed % 3600) / 60)
+s = int(elapsed % 60)
+print('\nElapsed time: {:02}h {:02}m {:02}s'.format(h, m, s))
+print('\n{} successfully finished!\n'.format(os.path.basename(sys.argv[0])))

@@ -1,11 +1,25 @@
-
+#!/usr/bin/env python3
 '''
+Written by Lu Liang, University of Edinburgh, School of Geosciences, 2025.
+
+===========
+Description
+===========
 script to reference InSAR vertical velocity to GPS vertical velocity
 using planar ramp inversion.
 
-Inputs: InSAR tif file; GPS file
-Outputs: 
-    outputs/gps_ref/
+============
+Inputs Files
+============
+data/
+    vu_AHB.tif
+    GPS_merge.csv
+
+============
+Output Files
+============
+outputs/
+    gps_ref/
         0.org_vu.png
         1.gps_on_org_vu.gps
         2.gps_vu_offset.png
@@ -14,8 +28,21 @@ Outputs:
         5.vu_shiyang_referenced.png
         vu_shiyang_referenced.tif
 '''
+# Change Log
+'''
+v1.0.3 20260324, Lu Liang, UoE
+ - sci cmap imported (untest).
+v1.0.2 20260223, Lu Liang, UoE
+ - plot extent bug fixed.
+v1.0.1 20251217, Lu Liang, UoE
+ - export tiff bug fixed.
+v1.0 20251214, Lu Liang, UoE
+ - script to reference vu by GNSS.
+'''
 
 import os
+import sys
+import time
 import rasterio
 import numpy as np
 import pandas as pd
@@ -26,6 +53,10 @@ from osgeo import gdal
 from shapely.geometry import Point
 from shapely.geometry import box
 from cmcrameri import cm
+
+author = 'Lu Liang, University of Edinburgh, School of Geosciences'
+ver = 'v1.0.3'
+last_update = '2026-03-24'
 
 
 # gdal.UseExceptions()
@@ -136,8 +167,11 @@ def load_gps_csv(gps):
     return gps_gdf
 
 if __name__ == '__main__':
+    # Start
+    start = time.time()
+    print('\n{} ver{} {} {}'.format(os.path.basename(sys.argv[0]), ver, last_update, author))
 
-    ## Open vu tif
+    # Open vu tif
     tif = OpenTif(IN_TIF)
     # print(f'tif_John size: {tif.xsize} x {tif.ysize}, resolution: {tif.xres} x {tif.yres}, coord extent: ({tif.left}, {tif.bottom}, {tif.right}, {tif.top})')
 
@@ -310,4 +344,10 @@ if __name__ == '__main__':
         plt.savefig(os.path.join(OUT_DIR, '5.gps_on_ref_vu.png'), dpi=150, bbox_inches='tight')
         plt.close()
 
-    print('Finished.')
+    # Finish
+    elapsed = time.time() - start
+    h = int(elapsed / 3600)
+    m = int((elapsed % 3600) / 60)
+    s = int(elapsed % 60)
+    print('\nElapsed time: {:02}h {:02}m {:02}s'.format(h, m, s))
+    print('\n{} successfully finished!\n'.format(os.path.basename(sys.argv[0])))
