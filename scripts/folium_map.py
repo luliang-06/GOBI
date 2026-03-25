@@ -14,6 +14,7 @@ outputs/map.html
 '''
 
 import os
+import io
 import folium
 import rasterio
 import glob
@@ -22,6 +23,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.colors as mcolors
+from PIL import Image
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 # IN_VU = os.path.join(BASE_DIR, 'data', 'vu_John_new.tif')
@@ -87,13 +89,16 @@ for _, row in df.drop_duplicates(subset=['well_id']).iterrows():
     if matches:
         html = f'<b>Well {well_id}</b><br> VU: {vu_str} mm/y<br>'
         for match in matches:
-            with open(matches[0], 'rb') as f:
-                img_b64 = base64.b64encode(f.read()).decode('utf-8')
-            ext = os.path.splitext(matches[0])[1].lstrip('.')
-            html += f'<img src="data:image/{ext};base64,{img_b64}" width="680px"><br>'
+            with Image.open(match) as im:
+                im.thumbnail((680, 680))
+                if im.mode == 'RGBA':
+                    im = im.convert('RGB')
+                buf = io.BytesIO()
+                im.save(buf, format='JPEG', quality=75)
+                img_b64 = base64.b64encode(buf.getvalue()).decode('utf-8')
+            html += f'<img src="data:image/jpeg;base64,{img_b64}" width="680px"><br>'
     else:
-        # html = f'<b>Well {well_id}</b><br>No time series available'
-        pass
+        html = f'<b>Well {well_id}</b><br>No time series available'
 
     popup = folium.Popup(folium.IFrame(html, width=700, height=500), max_width=720)
 
@@ -107,19 +112,6 @@ for _, row in df.drop_duplicates(subset=['well_id']).iterrows():
         weight=1, 
         popup=popup
     ).add_to(m)
-
-# # Add well location as layer
-# for _, row in df.iterrows():
-#     color = mcolors.to_hex(cmap(norm(row['gw_k_sin'])))
-#     folium.CircleMarker(
-#         location=[row['lat'], row['lon']],
-#         radius=8, 
-#         color='dimgray',
-#         fill=True,
-#         fill_color=color,
-#         fill_opacity=0.7,
-#         weight=1
-#     ).add_to(m)
 
 out_map = os.path.join(OUT_DIR, 'map.html')
 m.save(out_map)

@@ -47,8 +47,8 @@ IN_H5 = os.path.join(BASE_DIR, 'data', '*.cum_filt_deramp.h5')
 IN_H5_UNFILT = os.path.join(BASE_DIR, 'data', '*.cum.h5')
 OUT_DIR = os.path.join(BASE_DIR, 'outputs', 'GWL_VU_ts')
 
-PLOT_UNFILT = False
-PLOT_MAP_VIEW = False
+PLOT_UNFILT = True
+PLOT_MAP_VIEW = True
 
 os.makedirs(OUT_DIR, exist_ok=True)
 
@@ -241,14 +241,18 @@ def plot_ts(gw_df, cum_ts, cum_dt, wid, frame_base,
     if ax_sin is not None:
         # GWL detrend
         if gw_sin_model is not None and gw_x is not None:
-            ax_sin.plot(gw_df['date'], predict_sin_only(gw_x, gw_sin_model), color='navy', linestyle='-', linewidth=1.2, label='GWL sin comp')
+            x_dense = np.linspace(gw_x.min(), gw_x.max(), 1000)
+            dates_dense = [gw_df['date'].min() + pd.Timedelta(days=float(d)) for d in x_dense]
+            ax_sin.plot(dates_dense, predict_sin_only(x_dense, gw_sin_model), color='steelblue', linestyle='-', linewidth=1.2, label='GWL sin comp')
 
         # GWL detrend
         if cum_sin_model is not None and cum_x is not None:
-            ax_sin.plot(cum_dt, predict_sin_only(cum_x, cum_sin_model), color='black', linestyle='-', linewidth=1.2, label='filt CUM sin comp')
+            x_dense = np.linspace(cum_x.min(), cum_x.max(), 1000)
+            dates_dense = [cum_dt[0] + pd.Timedelta(days=float(d)) for d in x_dense]
+            ax_sin.plot(dates_dense, predict_sin_only(x_dense, cum_sin_model), color='firebrick', linestyle='-', linewidth=1.2, label='filt CUM sin comp')
 
         ax_sin.set_title(f'Frame: {frame_base} | Well ID: {wid}', fontsize=12)
-        ax_sin.set_ylabel('Amplitude', fontsize=12)
+        ax_sin.set_ylabel('Seasonal Components', fontsize=12)
         ax_sin.legend(loc='upper right', fontsize=9)
         ax_sin.xaxis.set_major_locator(mdates.YearLocator())
         ax_sin.xaxis.set_major_formatter(mdates.DateFormatter('%Y'))
@@ -257,30 +261,34 @@ def plot_ts(gw_df, cum_ts, cum_dt, wid, frame_base,
     # plot cum.h5
     if cum_unfilt_ts is not None and cum_unfilt_dt is not None:
         sns.scatterplot(
-            x=cum_unfilt_dt, y=cum_unfilt_ts, ax=ax2, 
+            x=cum_unfilt_dt, y=cum_unfilt_ts, ax=ax, 
             s=30, alpha=0.5, facecolor='lightgrey', edgecolor='grey', linewidth=0.8,
             label='cum.h5')
         
     # sin model
     if cum_unfilt_sin_model is not None and cum_unfilt_x is not None:
-        cum_unfilt_sin_y = predict_sin(cum_unfilt_x, cum_unfilt_sin_model)   # sinusoidal line
-        ax2.plot(cum_unfilt_dt, cum_unfilt_sin_y, color='grey', linestyle='-', linewidth=1.2, label='sinusoidal fit: cum.h5')
-        cum_unfilt_sin_slope = cum_unfilt_sin_model[3] * cum_unfilt_x + cum_unfilt_sin_model[4]  # slope line
-        ax2.plot(cum_unfilt_dt, cum_unfilt_sin_slope, color='grey', linestyle='-', linewidth=1.2)
+        x_dense = np.linspace(cum_unfilt_x.min(), cum_unfilt_x.max(), 1000)
+        dates_dense = [cum_unfilt_dt[0] + pd.Timedelta(days=float(d)) for d in x_dense]
+        cum_uf_k = cum_unfilt_sin_model[3] * 365.25
+        ax.plot(dates_dense, predict_sin(x_dense, cum_unfilt_sin_model), color='grey', linestyle='-', linewidth=1.2, label=f'sin fit: cum.h5 (k = {cum_uf_k:+.2f} mm/yr)')
+        cum_unfilt_sin_slope = cum_unfilt_sin_model[3] * x_dense + cum_unfilt_sin_model[4]
+        ax.plot(dates_dense, cum_unfilt_sin_slope, color='grey', linestyle='-', linewidth=1.2)
 
     # -------------------------------------------------------------------------------
     # plot cum_filt_deramp.h5
     sns.scatterplot(
-        x=cum_dt, y=cum_ts, ax=ax2, 
-        s=30, alpha=0.5, facecolor='dimgray', edgecolor='black', linewidth=0.8,
+        x=cum_dt, y=cum_ts, ax=ax, 
+        s=30, alpha=0.5, facecolor='firebrick', edgecolor='darkred', linewidth=0.8,
         label='cum_filt_deramp.h5')
 
     # sin model
     if cum_sin_model is not None and cum_x is not None:
-        cum_sin_y = predict_sin(cum_x, cum_sin_model)   # sinusoidal line
-        ax2.plot(cum_dt, cum_sin_y, color='black', linestyle='-', linewidth=1.2, label='sinusoidal fit: cum_filt_deramp.h5')
-        cum_sin_slope = cum_sin_model[3] * cum_x + cum_sin_model[4]  # slope line
-        ax2.plot(cum_dt, cum_sin_slope, color='black', linestyle='-', linewidth=1.2)
+        x_dense = np.linspace(cum_x.min(), cum_x.max(), 1000)
+        dates_dense = [cum_dt[0] + pd.Timedelta(days=float(d)) for d in x_dense]
+        cum_k = cum_sin_model[3] * 365.25
+        ax.plot(dates_dense, predict_sin(x_dense, cum_sin_model), color='firebrick', linestyle='-', linewidth=1.2, label=f'sin fit: cum_filt_deramp.h5 (k = {cum_k:+.2f} mm/yr)')
+        cum_sin_slope = cum_sin_model[3] * x_dense + cum_sin_model[4]
+        ax.plot(dates_dense, cum_sin_slope, color='firebrick', linestyle='-', linewidth=1.2)
         # ax2.text(0.75, 0.88, 
         #         f'$VU_{{sin}} = {A:.2f} \\sin ( \\frac{{2\\pi}}{{{T:.1f}}} t + {phi:.2f}) + {k:.3f} t + {c:.2f}$', 
         #         transform=ax.transAxes, fontsize=9, color='dimgray',
@@ -289,36 +297,38 @@ def plot_ts(gw_df, cum_ts, cum_dt, wid, frame_base,
     # # linear model
     # if cum_model is not None and cum_x is not None:
     #     cum_y_fit = cum_model.predict(sm.add_constant(cum_x))
-    #     ax2.plot(cum_dt, cum_y_fit, color='black', linestyle='--', linewidth=1.0, label='linear fit: cum_filt_deramp.h5')
-    #     # ax2.text(0.75, 0.83, f'$VU_{{lin}} = {k:.3f} t + {c:.2f}$',
+    #     ax.plot(cum_dt, cum_y_fit, color='black', linestyle='--', linewidth=1.0, label='linear fit: cum_filt_deramp.h5')
+    #     # ax.text(0.75, 0.83, f'$VU_{{lin}} = {k:.3f} t + {c:.2f}$',
     #     #          transform=ax.transAxes, fontsize=9, color='black',
     #     #          verticalalignment='top')
     
     # -------------------------------------------------------------------------------
     # plot GWL
     sns.scatterplot(
-        x=gw_df['date'], y=gw_df['obs_gw'], ax=ax, 
+        x=gw_df['date'], y=gw_df['obs_gw'], ax=ax2, 
         s=30, alpha=0.5, facecolor='steelblue', edgecolor='navy', linewidth=0.8,
         label='Groundwater Level')
     
     # sin model
     if gw_sin_model is not None and gw_x is not None:
-        gw_sin_y = predict_sin(gw_x, gw_sin_model)  # sinusoidal line
-        ax.plot(gw_df['date'], gw_sin_y, color='navy', linestyle='-', linewidth=1.2, label='sinusoidal fit: GWL')
-        gw_sin_slope = gw_sin_model[3] * gw_x + gw_sin_model[4]  # slope line
-        ax.plot(gw_df['date'], gw_sin_slope, color='navy', linestyle='-', linewidth=1.2)
+        x_dense = np.linspace(gw_x.min(), gw_x.max(), 1000)
+        dates_dense = [gw_df['date'].min() + pd.Timedelta(days=float(d)) for d in x_dense]
+        gw_k = gw_sin_model[3] * 365.25
+        ax2.plot(dates_dense, predict_sin(x_dense, gw_sin_model), color='steelblue', linestyle='-', linewidth=1.2, label=f'sin fit: GWL (k = {gw_k:+.3f} m/yr)')
+        gw_sin_slope = gw_sin_model[3] * x_dense + gw_sin_model[4]
+        ax2.plot(dates_dense, gw_sin_slope, color='steelblue', linestyle='-', linewidth=1.2)
         # A, T, phi, k, c = gw_sin_model
-        # ax.text(0.75, 0.98, 
+        # ax2.text(0.75, 0.98, 
         #         f'$GW_{{sin}} = {A:.2f} \\sin ( \\frac{{2\\pi}}{{{T:.1f}}} t + {phi:.2f}) + {k:.3f} t + {c:.2f}$', 
-        #         transform=ax.transAxes, fontsize=9, color='steelblue',
+        #         transform=ax2.transAxes, fontsize=9, color='steelblue',
         #         verticalalignment='top')
 
     # # linear model
     # if gw_model is not None and gw_x is not None:
     #     gw_y_fit = gw_model.predict(sm.add_constant(gw_x))
-    #     ax.plot(gw_df['date'], gw_y_fit, color='navy', linestyle='--', linewidth=1.0, label='linear fit: GWL')
+    #     ax2.plot(gw_df['date'], gw_y_fit, color='navy', linestyle='--', linewidth=1.0, label='linear fit: GWL')
     #     # k, c = gw_model.params[1], gw_model.params[0]
-    #     # ax.text(0.75, 0.93, f'$GW_{{lin}} = {k:.3f} t + {c:.2f}$',
+    #     # ax2.text(0.75, 0.93, f'$GW_{{lin}} = {k:.3f} t + {c:.2f}$',
     #     #         transform=ax.transAxes, fontsize=9, color='navy',
     #     #         verticalalignment='top')
 
@@ -331,35 +341,34 @@ def plot_ts(gw_df, cum_ts, cum_dt, wid, frame_base,
     # ax.grid(False)
     ax2.grid(False)
 
-    ax.set_ylabel('Ground Water Level (m)', color='navy', fontsize=12)
-    ax2.set_ylabel('Cummulative Displacement (mm)', fontsize=12)
-
-    # ymin, ymax = ax.get_ylim()
-    # yrange = ymax - ymin
-    # ax.set_ylim(ymin - 0.2*yrange, ymax + 0.2*yrange)
-    gw_centre = np.median(gw_df['obs_gw'].dropna())
-    ax.set_ylim(gw_centre - 9, gw_centre + 9)
+    ax.set_ylabel('Cummulative Displacement (mm)', fontsize=12)
+    ax2.set_ylabel('Ground Water Level (m)', color='steelblue', fontsize=12)
+    
+    ymin, ymax = ax2.get_ylim()
+    yrange = ymax - ymin
+    ax2.set_ylim(ymin - 0.2*yrange, ymax + 0.2*yrange)
+    # gw_centre = np.median(gw_df['obs_gw'].dropna())
+    # ax2.set_ylim(gw_centre - 9, gw_centre + 9)
     # if cum_unfilt_ts is not None:
     #     cumF_centre = np.median(cum_ts[~np.isnan(cum_ts)])
     #     cumUF_centre = np.median(cum_unfilt_ts[~np.isnan(cum_unfilt_ts)])
     #     cum_centre = np.mean([cumF_centre, cumUF_centre])
     # else:
     #     cum_centre = np.median(cum_ts[~np.isnan(cum_ts)])
-    cum_centre = np.median(cum_ts[~np.isnan(cum_ts)])
-    ax2.set_ylim(cum_centre - 50, cum_centre + 30)
+    # ax.set_ylim(cum_centre - 50, cum_centre + 30)
 
     ax.xaxis.set_major_locator(mdates.YearLocator())
     ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y'))
 
-    ax.ticklabel_format(style='plain', axis='y', useOffset=False)
-    ax.tick_params(axis='y', colors='navy')
-    ax.yaxis.set_major_formatter(mtick.FormatStrFormatter('%.2f'))  # keep 2 decimal places 
+    ax2.ticklabel_format(style='plain', axis='y', useOffset=False)
+    ax2.tick_params(axis='y', colors='steelblue')
+    ax2.yaxis.set_major_formatter(mtick.FormatStrFormatter('%.2f'))  # keep 2 decimal places 
 
     # legend setting
     lines1, labels1 = ax.get_legend_handles_labels()
     lines2, labels2 = ax2.get_legend_handles_labels()
-    ax.legend(lines1 + lines2, labels1 + labels2, loc='best', fontsize=9)
-    ax2.get_legend().remove() if ax2.get_legend() else None
+    ax2.legend(lines1 + lines2, labels1 + labels2, loc='upper right', fontsize=9)
+    ax.get_legend().remove() if ax.get_legend() else None
 
     plt.savefig(os.path.join(OUT_DIR, f'F{frame_base}_W{wid}.png'))
     # plt.show()
