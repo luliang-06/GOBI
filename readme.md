@@ -1,104 +1,86 @@
-# GOBI 地下水年鉴提取项目
+# GOBI — Groundwater Observation from InSAR
 
-本项目用于从地下水监测年鉴 PDF 中提取数据并生成结构化表格。
+This project estimates groundwater level (GWL) change rates across the Shiyang Basin using InSAR-derived vertical displacement (VU) data, and validates the results against observed well measurements.
 
-## Step 1: Initiate venv （首次使用时）
+---
 
-如果是第一次运行项目，需要创建虚拟环境并安装脚本所需的依赖。
+## Overview
 
-在终端中运行 `init_env.sh`：
+The workflow has four main steps:
+
+**Step 1 — Time series analysis and sinusoidal model fitting**
+
+For each groundwater well, the observed GWL time series and the co-located InSAR cumulative displacement (cumU) are plotted together. A sinusoidal model is fitted to extract the linear trend (change rate) and seasonal component from both signals.
+
+<!-- Insert figure: scatter plot of GWL vs InSAR cumU with model fit -->
+![GWL vs InSAR time series](figures/F033D_05106_131313_W620302210018.png)
+
+**Step 2 — Regression: GWL change rate vs VU**
+
+The GWL change rates from all wells are compared against InSAR VU values extracted at the same locations. A weighted least-squares (WLS) regression is fitted to derive the relationship:
+
+```
+GWL change rate = a × VU + b   (m/yr)
+```
+
+**Step 3 — Predict GWL change rate from InSAR VU**
+
+The regression equation from Step 2 is applied to the full VU raster to produce a spatially continuous map of predicted GWL change rate, exported as a GeoTIFF file.
+
+**Step 4 — Compare observed vs predicted GWL change rate**
+
+The observed GWL change rates at individual wells are plotted on top of the predicted GWL change rate map to validate the results.
+
+<!-- Insert figure: observed GWL change rate points on predicted raster map -->
+![Observed vs Predicted GWL change rate](figures/gwlcr_on_vu.png)
+
+---
+
+## Setup
+
+This project runs in a conda environment. If you don't have conda installed, download [Miniconda](https://docs.conda.io/en/latest/miniconda.html) first.
+
+**First time only — create the environment:**
+
 ```bash
-chmod +x init_env.sh
 source init_env.sh
 ```
 
-执行成功后将显示：
-“虚拟环境创建并已安装依赖。“
+This will automatically create the `gobi` conda environment from `environment.yml` and activate it.
 
-### 注意事项：Tesseract 中文语言包配置
-
-本脚本使用 OCR 提取 PDF 中的中文内容，依赖于 Tesseract 的简体中文语言包（`chi_sim.traineddata`）。
-
-项目默认假设语言包位于项目根目录下的：
-    GOBI/tessdata/chi_sim.traineddata
-
-请确保：
-1. 该文件存在（可通过手动下载或使用 init 脚本自动拉取）
-2. `scripts/main_extract.py` 中已自动设置环境变量 `TESSDATA_PREFIX` 指向该目录
-
-如需手动下载语言包，可使用以下命令：
+**If the environment already exists:**
 
 ```bash
-curl -L -o tessdata/chi_sim.traineddata https://ghproxy.com/https://github.com/tesseract-ocr/tessdata/raw/main/chi_sim.traineddata
+conda activate gobi
 ```
 
-或者访问：https://github.com/tesseract-ocr/tessdata 下载所需语言文件。
+---
 
-### 注意事项：有关PaddleOCR
+## File Structure
 
-本脚本使用 `PaddleOCR` 提取 PDF 中的中文内容（https://github.com/PaddlePaddle/PaddleOCR/blob/main/README_cn.md）
-
-其优点为可以准确识别文字包括位置，适用于结构复杂的表格。
-
-`PaddleOCR` 需要依赖本地编译器环境（clang），在安装 `PaddleOCR` 之前需要确认安装 `Command Line Tools`:
-
-on Mac Terminal:
-```bash
-xcode-select --install
+```
+your_working_directory/
+├── GOBI/                         # This repository
+│   ├── scripts/
+│   │   ├── get_vu.py
+│   │   ├── gps_reference.py
+│   │   ├── plot_ts.py
+│   │   ├── plot_reg.py
+│   │   ├── export_gwvel.py
+│   │   ├── folium_map.py
+│   │   ├── quick_plot.py
+│   │   └── Address2Coord.py
+│   ├── figures/                  # Figures for README
+│   ├── environment.yml           # Conda environment
+│   ├── init_env.sh               # Environment setup script
+│   ├── gmt.conf
+│   └── readme.md
+├── data/                         # Input data (provided separately, not in repo)
+└── outputs/                      # Output figures and maps
 ```
 
-在 `clang` 安装成功后再进行 `PaddleOCR` 的安装即可。
+---
 
-测试是否成功安装 `PaddleOCR`：
+## Author
 
-```bash
-python -c "from paddleocr import PaddleOCR; print(PaddleOCR())"
-```
-如果没有出现error message并输出了OCR配置即代表安装成功。
-
-## Step 2: Reactive venv （如果已创建过venv）
-
-如果已经建立过虚拟环境，只需重新启动venv。
-
-```bash
-pyenv activate gobi-paddle
-```
-
-激活成功后，终端前会出现 `(gobi-paddle)` 前缀，表示当前已在虚拟环境中。
-
-或者可以输入如下命令以在此目录下默认运行 `gobi-paddle` 这个虚拟环境：
-```bash
-pyenv local gobi-paddle
-```
-
-## Step 3: Run Script
-
-在虚拟环境激活状态下，执行脚本：
-```bash
-python scripts/main_extract.py
-```
-
-或根据实际脚本路径替换：
-```bash
-python PATH/TO/SCRIPT.py
-```
-
-## Step 4: Exit venv
-
-运行完毕后退出虚拟环境：
-```bash
-source deactive
-```
-
-退出后终端前缀将消失，返回系统默认 Python 环境。
-
-## 文件结构建议
-
-GOBI/
-├── venv/                # 虚拟环境目录（自动生成）
-├── scripts/             # Python 脚本
-│   └── main_extract.py
-├── data/                # 原始 PDF、Excel 数据
-├── output/              # 提取结果
-├── requirements.txt     # 项目依赖列表
-└── init_env.sh          # 初始化虚拟环境脚本
+Lu Liang — School of GeoSciences, University of Edinburgh (2025–2026)
