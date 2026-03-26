@@ -37,9 +37,9 @@ ver = 'v1.0'
 last_update = '2025-11-26'
 
 
-vu_file = '/exports/geos.ed.ac.uk/comet/lliang/GOBI_proj/data/vu_AHB.tif'
+vu_file = '/exports/geos.ed.ac.uk/comet/lliang/GOBI_proj/outputs/gps_ref/vu_shiyang_referenced.tif'
 # vu_file = '/exports/geos.ed.ac.uk/comet/lliang/GOBI_proj/data/vu_Qi_fillnodata.tif'
-gw_vel_tif = '/exports/geos.ed.ac.uk/comet/lliang/GOBI_proj/data/gwl_cr_all.tif'
+gw_vel_tif = '/exports/geos.ed.ac.uk/comet/lliang/GOBI_proj/data/gwl_cr_SYref.tif'
 
 # Start    
 start = time.time()
