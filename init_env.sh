@@ -11,7 +11,7 @@ fi
 # if env not exist, then create
 if ! conda env list | awk '{print $1}' | grep -qx "$ENV_NAME"; then
     echo "Creating conda environment '$ENV_NAME'..."
-    conda env create -f environment.yml
+    conda env create -f environment_essential.yml
 else
     echo "Conda environment '$ENV_NAME' already exists, skipping creation."
 fi
