@@ -16,28 +16,28 @@ points=/exports/geos.ed.ac.uk/comet/lliang/GOBI_proj/data/GWLcr_VU_ModelResult.c
 gps=/exports/geos.ed.ac.uk/comet/lliang/GOBI_proj/data/GPS_merge.csv
 
 raster=/exports/geos.ed.ac.uk/comet/lliang/GOBI_proj/data/gwl_cr_all.nc
-vu_shiyang=/exports/geos.ed.ac.uk/comet/lliang/GOBI_proj/data/vu_shiyang.nc
+vu_shiyang=/exports/geos.ed.ac.uk/comet/lliang/GOBI_proj/data/gwl_cr_SYref.nc
 vu_AHB=/exports/geos.ed.ac.uk/comet/lliang/GOBI_proj/data/vu_AHB.nc
 vu_ref=/exports/geos.ed.ac.uk/comet/lliang/GOBI_proj/outputs/gps_ref/vu_shiyang_referenced.nc
 
 out_dir=/exports/geos.ed.ac.uk/comet/lliang/GOBI_proj/outputs/
 
 
-# plot GPS on vu
-gmt begin ${out_dir}/gps_on_vu png
-	gmt basemap -R101.7/104.7/37.3/39.3 -JX6i -B1 -BWeSn+t"GNSS Vu & InSAR Vu"							# -R: map extent ｜ -J: projection | -B: axis interval | -B: map frame (capital: label & ticks)
-    gmt makecpt -Croma -T-5/5 -I 													# change the limits of your colour map
-	gmt grdimage $vu_ref -n+c -Q -t15											    # -n: interpolation | +c: clip | -Q: set nans as transparent
-    gmt colorbar -DjTL+w1.8/13%+o1/1+h+e+ml -F+gwhite+p0.1p -Bx5+l"Vu" -By+l"mm/yr" 						# change the 3 in -Bx3 for tick label interval on the colourbar
-	awk -F "," '(NR>1 && $9!=1000){print $2, $3, $9}' $gps | gmt plot -St0.35 -C -W0.6p,black
-gmt end
+# # plot GPS on vu
+# gmt begin ${out_dir}/gps_on_vu png
+# 	gmt basemap -R101.7/104.7/37.3/39.3 -JX6i -B1 -BWeSn+t"GNSS Vu & InSAR Vu"							# -R: map extent ｜ -J: projection | -B: axis interval | -B: map frame (capital: label & ticks)
+#     gmt makecpt -Croma -T-5/5 -I 													# change the limits of your colour map
+# 	gmt grdimage $vu_ref -n+c -Q -t15											    # -n: interpolation | +c: clip | -Q: set nans as transparent
+#     gmt colorbar -DjTL+w1.8/13%+o1/1+h+e+ml -F+gwhite+p0.1p -Bx5+l"Vu" -By+l"mm/yr" 						# change the 3 in -Bx3 for tick label interval on the colourbar
+# 	awk -F "," '(NR>1 && $9!=1000){print $2, $3, $9}' $gps | gmt plot -St0.35 -C -W0.6p,black
+# gmt end
 
 
 # plot GWL change rate  on vu
 gmt begin ${out_dir}/gwlcr_on_vu png
 	gmt basemap -R101.7/104.7/37.3/39.3 -JX6i -B1 -BWeSn+t"Observed GWL change rate & InSAR Prediction"							# -R: map extent ｜ -J: projection | -B: axis interval | -B: map frame (capital: label & ticks)
     gmt makecpt -Croma -T-1/1 -I 													# change the limits of your colour map
-	gmt grdimage $raster -n+c -Q 												    # -n: interpolation | +c: clip | -Q: set nans as transparent
+	gmt grdimage $vu_shiyang -n+c -Q 												    # -n: interpolation | +c: clip | -Q: set nans as transparent
     gmt colorbar -DjTL+w1.8/13%+o1/1+h+e+ml -F+gwhite+p0.1p -Bx1+l"@~D@~GWL/@~D@~t" -By+l"m/yr"						# change the 3 in -Bx3 for tick label interval on the colourbar
 	awk -F "," '(NR>1){print $3, $4, $13}' $points | gmt plot -Sc0.22 -C -W0.4p,black
 gmt end
