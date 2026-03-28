@@ -16,7 +16,7 @@ points=/exports/geos.ed.ac.uk/comet/lliang/GOBI_proj/data/GWLcr_VU_ModelResult.c
 gps=/exports/geos.ed.ac.uk/comet/lliang/GOBI_proj/data/GPS_merge.csv
 
 raster=/exports/geos.ed.ac.uk/comet/lliang/GOBI_proj/data/gwl_cr_all.nc
-vu_shiyang=/exports/geos.ed.ac.uk/comet/lliang/GOBI_proj/data/gwl_cr_SYref.nc
+vu_shiyang=/exports/geos.ed.ac.uk/comet/lliang/GOBI_proj/outputs/gwl_cr_SYref.nc
 vu_AHB=/exports/geos.ed.ac.uk/comet/lliang/GOBI_proj/data/vu_AHB.nc
 vu_ref=/exports/geos.ed.ac.uk/comet/lliang/GOBI_proj/outputs/gps_ref/vu_shiyang_referenced.nc
 
