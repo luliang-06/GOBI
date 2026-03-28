@@ -72,7 +72,7 @@ BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 IN_CSV = os.path.join(BASE_DIR, 'data', 'GroundwaterLevel_2018-2023.csv')
 IN_H5 = os.path.join(BASE_DIR, 'data', '*.cum_filt_deramp.h5')
 IN_H5_UNFILT = os.path.join(BASE_DIR, 'data', '*.cum.h5')
-OUT_DIR = os.path.join(BASE_DIR, 'outputs_test', 'GWL_VU_ts')
+OUT_DIR = os.path.join(BASE_DIR, 'outputs', 'GWL_VU_ts')
 
 PLOT_UNFILT = True
 PLOT_SEASON_COMP = True
