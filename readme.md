@@ -36,26 +36,6 @@ The observed GWL change rates at individual wells are plotted on top of the pred
 
 ---
 
-## Setup
-
-This project runs in a conda environment. If you don't have conda installed, download [Miniconda](https://docs.conda.io/en/latest/miniconda.html) first.
-
-**First time only — create the environment:**
-
-```bash
-source init_env.sh
-```
-
-This will automatically create the `gobi` conda environment from `environment.yml` and activate it.
-
-**If the environment already exists:**
-
-```bash
-conda activate gobi
-```
-
----
-
 ## How to Use
 
 ### Prerequisites
