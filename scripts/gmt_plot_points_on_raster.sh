@@ -12,7 +12,7 @@ gmt set MAP_TITLE_OFFSET 2p
 gmt set MAP_ANNOT_OFFSET_SECONDARY auto
 
 
-points=/exports/geos.ed.ac.uk/comet/lliang/GOBI_proj/data/GWLcr_VU_ModelResult.csv # or a separate txt file (if comma delimited, you'll need to change the awk statement below slightly)
+points=/exports/geos.ed.ac.uk/comet/lliang/GOBI_proj/outputs/GWLcr_VU_ModelResult.csv # or a separate txt file (if comma delimited, you'll need to change the awk statement below slightly)
 gps=/exports/geos.ed.ac.uk/comet/lliang/GOBI_proj/data/GPS_merge.csv
 
 raster=/exports/geos.ed.ac.uk/comet/lliang/GOBI_proj/data/gwl_cr_all.nc
