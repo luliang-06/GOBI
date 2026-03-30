@@ -445,7 +445,7 @@ def plot_reg(df):
     plt.title('VU vs Groundwater Change Rate', fontsize=14)
 
     # save plot
-    out_vel_plot = os.path.join(BASE_DIR, 'outputs', 'GWvsVU.png')
+    out_vel_plot = os.path.join(BASE_DIR, 'outputs', 'reg_GWcr_vs_VU.png')
     plt.tight_layout()
     plt.savefig(out_vel_plot)
     plt.show()
