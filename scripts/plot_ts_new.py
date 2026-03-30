@@ -73,7 +73,7 @@ BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 IN_CSV = os.path.join(BASE_DIR, 'data', 'GW_raw.csv')
 IN_H5 = os.path.join(BASE_DIR, 'data', '*.cum_filt_deramp.h5')
 IN_H5_UNFILT = os.path.join(BASE_DIR, 'data', '*.cum.h5')
-IN_VU_ALL = os.path.join(BASE_DIR, 'data', 'vu_shiyang_referenced.tif')
+IN_VU_ALL = os.path.join(BASE_DIR, 'data', 'vu_AHB.tif')
 OUT_DIR = os.path.join(BASE_DIR, 'outputs', 'GWL_VU_ts')
 
 PLOT_UNFILT = True
@@ -196,7 +196,6 @@ def calc_wls(x, y, eps=1e-8):
     # print(wls2_result.summary())
 
     return ols_result
-# , wls2_result
 
 def calc_sin(x, y):
     # clean data
@@ -616,8 +615,8 @@ if __name__ == '__main__':
 
     # 8) calculate predicted gwl change rate
     vu_file = IN_VU_ALL
-    gw_vel_tif = os.path.join(BASE_DIR, 'outputs', 'gwl_cr_SYref.tif')
-    gw_vel_tif_all = os.path.join(BASE_DIR, 'outputs', 'gwl_cr_SYref_all.tif')
+    gw_vel_tif = os.path.join(BASE_DIR, 'outputs', 'pred_GWLcr_VU.tif')
+    gw_vel_tif_all = os.path.join(BASE_DIR, 'outputs', 'pred_GWLcr_VUall.tif')
 
     # 8.1 Converting using sperated vus results
     print(f'Converting tif to predicted GWLcr ... (1/2)')

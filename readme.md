@@ -58,7 +58,7 @@ data/
     GroundwaterLevel_2018-2023.csv   # UTF-8 encoded, comma-separated
     fid*.cum_filt_deramp.h5          # Filted & deramped InSAR cummulative deformation result (100m spatial resolution, in frame unit)
     fid*.cum.h5                      # Unfilted & underamped InSAR cum deformation results (optional, 100m resolution)
-    vu_shiyang_referenced.tif        # InSAR VU result tif format (1km resolution, cropped from vu_AHB.tif, GPS referenced)
+    vu_AHB.tif                       # InSAR VU result tif format (1km resolution)
 ```
 
 **3. Set up the environment**
@@ -86,14 +86,14 @@ outputs/GWL_VU_ts/*.png              # time series plots per well
 outputs/GWLcr_VU_ModelResult.csv     # model fit results
 outputs/reg_GWLcr_vs_VU.png          # regression plot between GWLcr & framed InSAR Vu
 outputs/reg_GWLcr_vs_VU.png          # regression plot between GWLcr & continuous InSAR Vu
-outputs/gwl_cr_SYref.tif             # predicted GWLcr raster derived from regression result between GWLcr & framed Vu
-outputs/gwl_cr_SYref_all.tif         # predicted GWLcr raster derived from regression result between GWLcr & countinuous Vu
+outputs/pred_GWLcr_VU.tif            # predicted GWLcr raster derived from regression result between GWLcr & framed Vu
+outputs/pred_GWLcr_VUall.tif         # predicted GWLcr raster derived from regression result between GWLcr & countinuous Vu
 ```
 
 **6. Convert output raster to NetCDF**
 ```bash
-gdal_translate -of netCDF ../outputs/gwl_cr_SYref.tif ../outputs/gwl_cr_SYref.nc
-gdal_translate -of netCDF ../outputs/gwl_cr_SYref_all.tif ../outputs/gwl_cr_SYref_all.nc
+gdal_translate -of netCDF ../outputs/pred_GWLcr_VU.tif ../outputs/pred_GWLcr_VU.nc
+gdal_translate -of netCDF ../outputs/pred_GWLcr_VUall.tif ../outputs/pred_GWLcr_VUall.nc
 ```
 
 **7. Plot results on map**
