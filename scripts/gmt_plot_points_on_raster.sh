@@ -12,10 +12,10 @@ gmt set MAP_TITLE_OFFSET 2p
 gmt set MAP_ANNOT_OFFSET_SECONDARY auto
 
 BASE_DIR=$(cd "$(dirname "$0")/../.." && pwd)
-points="${BASE_DIR}/outputs_test/GWLcr_VU_ModelResult.csv"
-vu_shiyang="${BASE_DIR}/outputs_test/gwl_cr_SYref.nc"
-vu_shiyang_all="${BASE_DIR}/outputs_test/gwl_cr_SYref_all.nc"
-OUT_DIR="${BASE_DIR}/outputs_test"
+points="${BASE_DIR}/outputs/GWLcr_VU_ModelResult.csv"
+vu_shiyang="${BASE_DIR}/outputs/gwl_cr_SYref.nc"
+vu_shiyang_all="${BASE_DIR}/outputs/gwl_cr_SYref_all.nc"
+OUT_DIR="${BASE_DIR}/outputs"
 
 # points=/exports/geos.ed.ac.uk/comet/lliang/GOBI_proj/data/GWLcr_VU_ModelResult.csv # or a separate txt file (if comma delimited, you'll need to change the awk statement below slightly)
 # gps=/exports/geos.ed.ac.uk/comet/lliang/GOBI_proj/data/GPS_merge.csv
@@ -39,7 +39,7 @@ OUT_DIR="${BASE_DIR}/outputs_test"
 
 
 # plot GWL change rate  on vu
-gmt begin ${out_dir}/gwlcr_on_vu png
+gmt begin ${OUT_DIR}/gwlcr_on_vu png
 	gmt basemap -R101.7/104.7/37.3/39.3 -JX6i -B1 -BWeSn+t"Observed GWL change rate & InSAR Prediction"							# -R: map extent ｜ -J: projection | -B: axis interval | -B: map frame (capital: label & ticks)
     gmt makecpt -Croma -T-1/1 -I 													# change the limits of your colour map
 	gmt grdimage $vu_shiyang -n+c -Q 												    # -n: interpolation | +c: clip | -Q: set nans as transparent
@@ -49,7 +49,7 @@ gmt end
 
 
 # plot GWL change rate  on vu_all
-gmt begin ${out_dir}/gwlcr_on_vuall png
+gmt begin ${OUT_DIR}/gwlcr_on_vuall png
 	gmt basemap -R101.7/104.7/37.3/39.3 -JX6i -B1 -BWeSn+t"Observed GWL change rate & InSAR Prediction"							# -R: map extent ｜ -J: projection | -B: axis interval | -B: map frame (capital: label & ticks)
     gmt makecpt -Croma -T-1/1 -I 													# change the limits of your colour map
 	gmt grdimage $vu_shiyang_all -n+c -Q 												    # -n: interpolation | +c: clip | -Q: set nans as transparent
