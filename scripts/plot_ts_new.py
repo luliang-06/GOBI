@@ -70,11 +70,11 @@ last_update = '2026-03-23'
 
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
-IN_CSV = os.path.join(BASE_DIR, 'data', '2018-2022_ShiyangBasin_Groundwater_WaterLevel_FIXED.csv')
+IN_CSV = os.path.join(BASE_DIR, 'data', 'GW_raw.csv')
 IN_H5 = os.path.join(BASE_DIR, 'data', '*.cum_filt_deramp.h5')
 IN_H5_UNFILT = os.path.join(BASE_DIR, 'data', '*.cum.h5')
-IN_VUall = os.path.join(BASE_DIR, 'outputs', 'gps_ref', 'vu_shiyang_referenced.tif')
-OUT_DIR = os.path.join(BASE_DIR, 'outputs_test', 'GWL_VU_ts')
+IN_VU_ALL = os.path.join(BASE_DIR, 'data', 'vu_shiyang_referenced.tif')
+OUT_DIR = os.path.join(BASE_DIR, 'outputs', 'GWL_VU_ts')
 
 PLOT_UNFILT = True
 PLOT_SEASON_COMP = True
@@ -113,59 +113,6 @@ def find_closest_index(array, value):
     """Find the index of the closest value in the array."""
     array = np.array(array)  # Convert the list to a NumPy array
     return (np.abs(array - value)).argmin()
-
-def load_gw_obs_csv_lu(in_csv):
-    # 1) load csv
-    df = pd.read_csv(in_csv)
-    # print(df.head(5))
-    # print(df.columns.tolist())
-
-    # 1.1 rename col name into english
-    # df = df.rename(columns={'统一编号':'well_id',
-    #                         '年份':'year',
-    #                         '经度':'lon', 
-    #                         '纬度':'lat', 
-    #                         '地面高程/米':'elevation'
-    #                         })
-    df = df.rename(columns={'wid':'well_id',
-                        'year':'year',
-                        'lon':'lon', 
-                        'lat':'lat', 
-                        'elevation(m)':'elevation'
-                        })
-
-    # 1.2 convert well_id to str to avoid scientific rotation
-    df['well_id'] = df['well_id'].astype(str)
-
-    # 1.3 set cols named in pattern 'Mxx_Dxx' as day_cols
-    pattern = re.compile(r'M\d{2}_D\d{2}$')
-    day_cols = [c for c in df.columns if pattern.match(str(c))]
-
-    # 1.4 melt wide csv -> long csv
-    df = df.melt(id_vars=['well_id', 'year', 'lon', 'lat', 'elevation'],
-                value_vars=day_cols,
-                var_name='obs_date',
-                value_name='obs_gw'
-                )
-
-    # 1.5 convert date to datetime
-    md = df['obs_date'].str.extract(r'M(\d{2})_D(\d{2})').astype(float)
-    df['month'] = md[0]
-    df['day'] = md[1]
-    df['year'] = pd.to_numeric(df['year'])
-
-    df['date'] = pd.to_datetime(
-        df['year'].astype(int).astype(str) +
-        df['month'].astype(int).astype(str).str.zfill(2) +
-        df['day'].astype(int).astype(str).str.zfill(2)
-    )
-    # print(f'Data type check:')
-    # print(df[:].dtypes.to_string()) # '.to_string()' is used to hide series dtype printed automatically
-    # print(f'csv sample check:')
-    # print(df.iloc[:11, :])
-    print(f'CSV data loaded successfully.')
-
-    return df
 
 def load_gw_obs_csv(in_csv):
     # 1) load csv
@@ -362,13 +309,13 @@ def plot_ts(gw_df, cum_ts, cum_dt, wid, frame_base,
         #         transform=ax.transAxes, fontsize=9, color='dimgray',
         #         verticalalignment='top')
 
-    # # # linear model
-    # # if cum_model is not None and cum_x is not None:
-    # #     cum_y_fit = cum_model.predict(sm.add_constant(cum_x))
-    # #     ax.plot(cum_dt, cum_y_fit, color='black', linestyle='--', linewidth=1.0, label='linear fit: cum_filt_deramp.h5')
-    # #     # ax.text(0.75, 0.83, f'$VU_{{lin}} = {k:.3f} t + {c:.2f}$',
-    # #     #          transform=ax.transAxes, fontsize=9, color='black',
-    # #     #          verticalalignment='top')
+    # # linear model
+    # if cum_model is not None and cum_x is not None:
+    #     cum_y_fit = cum_model.predict(sm.add_constant(cum_x))
+    #     ax.plot(cum_dt, cum_y_fit, color='black', linestyle='--', linewidth=1.0, label='linear fit: cum_filt_deramp.h5')
+    #     # ax.text(0.75, 0.83, f'$VU_{{lin}} = {k:.3f} t + {c:.2f}$',
+    #     #          transform=ax.transAxes, fontsize=9, color='black',
+    #     #          verticalalignment='top')
     
     # -------------------------------------------------------------------------------
     # plot GWL
@@ -406,7 +353,6 @@ def plot_ts(gw_df, cum_ts, cum_dt, wid, frame_base,
         ax.set_title(f'Frame: {frame_base} | Well ID: {wid}', fontsize=12)
     ax.set_xlabel('Time', fontsize=12)
 
-    # ax.grid(False)
     ax2.grid(False)
 
     ax.set_ylabel('Cummulative Displacement (mm)', fontsize=12)
@@ -415,15 +361,6 @@ def plot_ts(gw_df, cum_ts, cum_dt, wid, frame_base,
     ymin, ymax = ax2.get_ylim()
     yrange = ymax - ymin
     ax2.set_ylim(ymin - 0.2*yrange, ymax + 0.2*yrange)
-    # gw_centre = np.median(gw_df['obs_gw'].dropna())
-    # ax2.set_ylim(gw_centre - 9, gw_centre + 9)
-    # if cum_unfilt_ts is not None:
-    #     cumF_centre = np.median(cum_ts[~np.isnan(cum_ts)])
-    #     cumUF_centre = np.median(cum_unfilt_ts[~np.isnan(cum_unfilt_ts)])
-    #     cum_centre = np.mean([cumF_centre, cumUF_centre])
-    # else:
-    #     cum_centre = np.median(cum_ts[~np.isnan(cum_ts)])
-    # ax.set_ylim(cum_centre - 50, cum_centre + 30)
 
     ax.xaxis.set_major_locator(mdates.YearLocator())
     ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y'))
@@ -439,7 +376,6 @@ def plot_ts(gw_df, cum_ts, cum_dt, wid, frame_base,
     ax.get_legend().remove() if ax.get_legend() else None
 
     plt.savefig(os.path.join(OUT_DIR, f'F{frame_base}_W{wid}.png'))
-    # plt.show()
     plt.close(fig)
 
     return True
@@ -492,8 +428,6 @@ def plot_reg(df):
     plt.close()
     print(f'GW vs VU scatter saved to {out_vel_plot}.')
 
-    return b, c
-
 
 
 
@@ -508,7 +442,7 @@ if __name__ == '__main__':
     print('----- Start. -----')
     
     # 1) load csv
-    df = load_gw_obs_csv_lu(IN_CSV)
+    df = load_gw_obs_csv(IN_CSV)
 
     # 2) Wells and groups
     # 2.1 select all wells, and avoid duplicates
@@ -558,7 +492,6 @@ if __name__ == '__main__':
 
             # get vel values
             cum = f['cumU'][:]
-            # cum = f['cum'][:]
 
             # get imdates
             imdates = f['imdates'][:]
@@ -567,10 +500,6 @@ if __name__ == '__main__':
             # find closest index for each well
             lon_idx = [find_closest_index(lon, lon_x) for lon_x in wells['lon']]
             lat_idx = [find_closest_index(lat, lat_x) for lat_x in wells['lat']]
-            # print(df['lon'][:5])
-            # print(lon_idx[:5])
-            # print(df['lat'][:5])
-            # print(lat_idx[:5])
 
             # 4) Model fitting
             # 4.1 loop each well within this frame
@@ -580,9 +509,6 @@ if __name__ == '__main__':
                 sub = groups.get_group(wid).sort_values('date') # get date for specific well
                 gw_ts = sub['obs_gw'].values.astype(float)
                 gw_x = (sub['date'] - sub['date'].min()).dt.days.values.astype(float)
-                # print(gw_x)
-                # print(gw_ts)
-                # print(f'Well {wid}: x size = {x_gw.size}, y size = {y_gw.size}')
 
                 # for linear fit
                 gw_model = calc_wls(gw_x, gw_ts)
@@ -599,7 +525,6 @@ if __name__ == '__main__':
                 xi, yi = int(xi), int(yi)
                 cum_ts = cum[:, yi, xi].astype(float)
                 cum_x = np.array([(d - cum_dates[0]).days for d in cum_dates], dtype=float)
-                # print(cum_x)
 
                 # for linear fit
                 cum_model = calc_wls(cum_x, cum_ts)
@@ -634,8 +559,7 @@ if __name__ == '__main__':
                     'frame': frame_base,
                     'well_id': wid,
                     'lon': lon,
-                    'lat': lat, 
-                    'elevation': df['elevation'], 
+                    'lat': lat,  
                     # linear fit
                     'gw_linear':      gw_vel,
                     'gw_unc_linear':  gw_unc,
@@ -688,12 +612,12 @@ if __name__ == '__main__':
     # 7) plot GWL change rate vs vu change rate
     # model_df = pd.read_csv(os.path.join(BASE_DIR, 'data', 'GWLcr_VU_ModelResult.csv'))
     reg_k, reg_c = plot_reg(model_pd)
-    reg_k_all, reg_c_all = plot_reg_allVU(model_pd, IN_VUall, os.path.join(BASE_DIR, 'outputs_test'))
+    reg_k_all, reg_c_all = plot_reg_allVU(model_pd, IN_VU_ALL, os.path.join(BASE_DIR, 'outputs'))
 
     # 8) calculate predicted gwl change rate
-    vu_file = os.path.join(BASE_DIR, 'data', 'vu_shiyang_referenced.tif')
-    gw_vel_tif = os.path.join(BASE_DIR, 'outputs_test', 'gwl_cr_SYref.tif')
-    gw_vel_tif_all = os.path.join(BASE_DIR, 'outputs_test', 'gwl_cr_SYref_all.tif')
+    vu_file = IN_VU_ALL
+    gw_vel_tif = os.path.join(BASE_DIR, 'outputs', 'gwl_cr_SYref.tif')
+    gw_vel_tif_all = os.path.join(BASE_DIR, 'outputs', 'gwl_cr_SYref_all.tif')
 
     # 8.1 Converting using sperated vus results
     print(f'Converting tif to predicted GWLcr ... (1/2)')
