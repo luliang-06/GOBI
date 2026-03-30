@@ -68,7 +68,14 @@ source init_env.sh
 ```
 This creates and activates the `gobi` conda environment (first run may take a few minutes).
 
-**4. Run the time series analysis**
+**4. Run auto bash file**
+```bash
+chmod +x run.sh
+./run.sh
+```
+
+**Otherwise, run manually:**
+**5. Run the time series analysis**
 ```bash
 python scripts/plot_ts_new.py
 ```
@@ -83,13 +90,13 @@ outputs/gwl_cr_SYref.tif             # predicted GWLcr raster derived from regre
 outputs/gwl_cr_SYref_all.tif         # predicted GWLcr raster derived from regression result between GWLcr & countinuous Vu
 ```
 
-**5. Convert output raster to NetCDF**
+**6. Convert output raster to NetCDF**
 ```bash
 gdal_translate -of netCDF ../outputs/gwl_cr_SYref.tif ../outputs/gwl_cr_SYref.nc
 gdal_translate -of netCDF ../outputs/gwl_cr_SYref_all.tif ../outputs/gwl_cr_SYref_all.nc
 ```
 
-**6. Plot results on map**
+**7. Plot results on map**
 ```bash
 ./scripts/gmt_plot_points_on_raster.sh
 ```
@@ -100,7 +107,7 @@ outputs/gwlcr_on_vu.png
 outputs/gwlcr_on_vuall.png
 ```
 
-**7. Clean coords data in ModelResult csv file**
+**8. Clean coords data in ModelResult csv file**
 ```bash
 python3 -c "import pandas as pd; df = pd.read_csv('../outputs/GWLcr_VU_ModelResult.csv'); df.drop(columns=['lon', 'lat']).to_csv('../outputs/GWLcr_VU_ModelResult.csv', index=False)"
 ```
@@ -109,6 +116,8 @@ Check coordination is cleaned:
 ```bash
 python3 -c "import pandas as pd; print(pd.read_csv('../outputs/GWLcr_VU_ModelResult.csv').head(5))"
 ```
+
+Finished.
 
 ---
 
