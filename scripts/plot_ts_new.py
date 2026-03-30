@@ -14,8 +14,9 @@ Plot the regression between groundwater level and Vu while return a function bet
 Inputs Files
 ============
 data/
-    GroundwaterLevel_2018-2023.csv
-    fid*.cum.h5
+    groundwater_data_from_Wu.csv
+    fid*.cum_filt_deramp.h5
+    fid*.cum.h5 (opt.)
 
 =============
 Outputs Files
@@ -23,9 +24,11 @@ Outputs Files
 outputs/
     GWL_VU_ts/
         F{frameID}_W{wellID}.png
-    GWLvsVU.png
-data/
-    GWL_VU_ModelResult.csv
+    reg_GWLcr_vs_VU.png
+    reg_GWLcr_vs_VUall.png
+    GWLcr_VU_ModelResult.csv
+    pred_GWLcr_VU.tif
+    pred_GWLcr_VUall.tif
 '''
 # Change Log:
 '''
@@ -70,7 +73,8 @@ last_update = '2026-03-23'
 
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
-IN_CSV = os.path.join(BASE_DIR, 'data', 'GW_raw.csv')
+csv_file = glob.glob(os.path.join(BASE_DIR, 'data', '*.csv'))
+IN_CSV = csv_file[0]
 IN_H5 = os.path.join(BASE_DIR, 'data', '*.cum_filt_deramp.h5')
 IN_H5_UNFILT = os.path.join(BASE_DIR, 'data', '*.cum.h5')
 IN_VU_ALL = os.path.join(BASE_DIR, 'data', 'vu_AHB.tif')
@@ -420,7 +424,7 @@ def plot_reg(df):
     plt.title('VU vs Groundwater Change Rate', fontsize=14)
 
     # save plot
-    out_vel_plot = os.path.join(BASE_DIR, 'outputs', 'reg_GWcr_vs_VU.png')
+    out_vel_plot = os.path.join(BASE_DIR, 'outputs', 'reg_GWLcr_vs_VU.png')
     plt.tight_layout()
     plt.savefig(out_vel_plot)
     plt.show()
