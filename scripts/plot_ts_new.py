@@ -62,6 +62,7 @@ import matplotlib.dates as mdates
 import seaborn as sns
 import statsmodels.api as sm
 from scipy.optimize import curve_fit
+from plot_reg import plot_reg_allVU
 
 author = 'Lu Liang, University of Edinburgh, School of Geosciences'
 ver = 'v1.3.1'
@@ -69,10 +70,11 @@ last_update = '2026-03-23'
 
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
-IN_CSV = os.path.join(BASE_DIR, 'data', 'GroundwaterLevel_2018-2023.csv')
+IN_CSV = os.path.join(BASE_DIR, 'data', '2018-2022_ShiyangBasin_Groundwater_WaterLevel_FIXED.csv')
 IN_H5 = os.path.join(BASE_DIR, 'data', '*.cum_filt_deramp.h5')
 IN_H5_UNFILT = os.path.join(BASE_DIR, 'data', '*.cum.h5')
-OUT_DIR = os.path.join(BASE_DIR, 'outputs', 'GWL_VU_ts')
+IN_VUall = os.path.join(BASE_DIR, 'outputs', 'gps_ref', 'vu_shiyang_referenced.tif')
+OUT_DIR = os.path.join(BASE_DIR, 'outputs_test', 'GWL_VU_ts')
 
 PLOT_UNFILT = True
 PLOT_SEASON_COMP = True
@@ -111,6 +113,59 @@ def find_closest_index(array, value):
     """Find the index of the closest value in the array."""
     array = np.array(array)  # Convert the list to a NumPy array
     return (np.abs(array - value)).argmin()
+
+def load_gw_obs_csv_lu(in_csv):
+    # 1) load csv
+    df = pd.read_csv(in_csv)
+    # print(df.head(5))
+    # print(df.columns.tolist())
+
+    # 1.1 rename col name into english
+    # df = df.rename(columns={'统一编号':'well_id',
+    #                         '年份':'year',
+    #                         '经度':'lon', 
+    #                         '纬度':'lat', 
+    #                         '地面高程/米':'elevation'
+    #                         })
+    df = df.rename(columns={'wid':'well_id',
+                        'year':'year',
+                        'lon':'lon', 
+                        'lat':'lat', 
+                        'elevation(m)':'elevation'
+                        })
+
+    # 1.2 convert well_id to str to avoid scientific rotation
+    df['well_id'] = df['well_id'].astype(str)
+
+    # 1.3 set cols named in pattern 'Mxx_Dxx' as day_cols
+    pattern = re.compile(r'M\d{2}_D\d{2}$')
+    day_cols = [c for c in df.columns if pattern.match(str(c))]
+
+    # 1.4 melt wide csv -> long csv
+    df = df.melt(id_vars=['well_id', 'year', 'lon', 'lat', 'elevation'],
+                value_vars=day_cols,
+                var_name='obs_date',
+                value_name='obs_gw'
+                )
+
+    # 1.5 convert date to datetime
+    md = df['obs_date'].str.extract(r'M(\d{2})_D(\d{2})').astype(float)
+    df['month'] = md[0]
+    df['day'] = md[1]
+    df['year'] = pd.to_numeric(df['year'])
+
+    df['date'] = pd.to_datetime(
+        df['year'].astype(int).astype(str) +
+        df['month'].astype(int).astype(str).str.zfill(2) +
+        df['day'].astype(int).astype(str).str.zfill(2)
+    )
+    # print(f'Data type check:')
+    # print(df[:].dtypes.to_string()) # '.to_string()' is used to hide series dtype printed automatically
+    # print(f'csv sample check:')
+    # print(df.iloc[:11, :])
+    print(f'CSV data loaded successfully.')
+
+    return df
 
 def load_gw_obs_csv(in_csv):
     # 1) load csv
@@ -271,41 +326,41 @@ def plot_ts(gw_df, cum_ts, cum_dt, wid, frame_base,
         ax_sin.xaxis.set_major_formatter(mdates.DateFormatter('%Y'))
         plt.setp(ax_sin.get_xticklabels(), visible=False)
     # -------------------------------------------------------------------------------
-    # # plot cum.h5
-    # if cum_unfilt_ts is not None and cum_unfilt_dt is not None:
-    #     sns.scatterplot(
-    #         x=cum_unfilt_dt, y=cum_unfilt_ts, ax=ax, 
-    #         s=30, alpha=0.5, facecolor='lightgrey', edgecolor='grey', linewidth=0.8,
-    #         label='cum.h5')
+    # plot cum.h5
+    if cum_unfilt_ts is not None and cum_unfilt_dt is not None:
+        sns.scatterplot(
+            x=cum_unfilt_dt, y=cum_unfilt_ts, ax=ax, 
+            s=30, alpha=0.5, facecolor='lightgrey', edgecolor='grey', linewidth=0.8,
+            label='cum.h5')
         
-    # # sin model
-    # if cum_unfilt_sin_model is not None and cum_unfilt_x is not None:
-    #     x_dense = np.linspace(cum_unfilt_x.min(), cum_unfilt_x.max(), 1000)
-    #     dates_dense = [cum_unfilt_dt[0] + pd.Timedelta(days=float(d)) for d in x_dense]
-    #     cum_uf_k = cum_unfilt_sin_model[3] * 365.25
-    #     ax.plot(dates_dense, predict_sin(x_dense, cum_unfilt_sin_model), color='grey', linestyle='-', linewidth=1.2, label=f'sin fit: cum.h5 (k = {cum_uf_k:+.2f} mm/yr)')
-    #     cum_unfilt_sin_slope = cum_unfilt_sin_model[3] * x_dense + cum_unfilt_sin_model[4]
-    #     ax.plot(dates_dense, cum_unfilt_sin_slope, color='grey', linestyle='-', linewidth=1.2)
+    # sin model
+    if cum_unfilt_sin_model is not None and cum_unfilt_x is not None:
+        x_dense = np.linspace(cum_unfilt_x.min(), cum_unfilt_x.max(), 1000)
+        dates_dense = [cum_unfilt_dt[0] + pd.Timedelta(days=float(d)) for d in x_dense]
+        cum_uf_k = cum_unfilt_sin_model[3] * 365.25
+        ax.plot(dates_dense, predict_sin(x_dense, cum_unfilt_sin_model), color='grey', linestyle='-', linewidth=1.2, label=f'sin fit: cum.h5 (k = {cum_uf_k:+.2f} mm/yr)')
+        cum_unfilt_sin_slope = cum_unfilt_sin_model[3] * x_dense + cum_unfilt_sin_model[4]
+        ax.plot(dates_dense, cum_unfilt_sin_slope, color='grey', linestyle='-', linewidth=1.2)
 
     # # -------------------------------------------------------------------------------
-    # # plot cum_filt_deramp.h5
-    # sns.scatterplot(
-    #     x=cum_dt, y=cum_ts, ax=ax, 
-    #     s=30, alpha=0.5, facecolor='firebrick', edgecolor='darkred', linewidth=0.8,
-    #     label='cum_filt_deramp.h5')
+    # plot cum_filt_deramp.h5
+    sns.scatterplot(
+        x=cum_dt, y=cum_ts, ax=ax, 
+        s=30, alpha=0.5, facecolor='firebrick', edgecolor='darkred', linewidth=0.8,
+        label='cum_filt_deramp.h5')
 
-    # # sin model
-    # if cum_sin_model is not None and cum_x is not None:
-    #     x_dense = np.linspace(cum_x.min(), cum_x.max(), 1000)
-    #     dates_dense = [cum_dt[0] + pd.Timedelta(days=float(d)) for d in x_dense]
-    #     cum_k = cum_sin_model[3] * 365.25
-    #     ax.plot(dates_dense, predict_sin(x_dense, cum_sin_model), color='firebrick', linestyle='-', linewidth=1.2, label=f'sin fit: cum_filt_deramp.h5 (k = {cum_k:+.2f} mm/yr)')
-    #     cum_sin_slope = cum_sin_model[3] * x_dense + cum_sin_model[4]
-    #     ax.plot(dates_dense, cum_sin_slope, color='firebrick', linestyle='-', linewidth=1.2)
-    #     # ax2.text(0.75, 0.88, 
-    #     #         f'$VU_{{sin}} = {A:.2f} \\sin ( \\frac{{2\\pi}}{{{T:.1f}}} t + {phi:.2f}) + {k:.3f} t + {c:.2f}$', 
-    #     #         transform=ax.transAxes, fontsize=9, color='dimgray',
-    #     #         verticalalignment='top')
+    # sin model
+    if cum_sin_model is not None and cum_x is not None:
+        x_dense = np.linspace(cum_x.min(), cum_x.max(), 1000)
+        dates_dense = [cum_dt[0] + pd.Timedelta(days=float(d)) for d in x_dense]
+        cum_k = cum_sin_model[3] * 365.25
+        ax.plot(dates_dense, predict_sin(x_dense, cum_sin_model), color='firebrick', linestyle='-', linewidth=1.2, label=f'sin fit: cum_filt_deramp.h5 (k = {cum_k:+.2f} mm/yr)')
+        cum_sin_slope = cum_sin_model[3] * x_dense + cum_sin_model[4]
+        ax.plot(dates_dense, cum_sin_slope, color='firebrick', linestyle='-', linewidth=1.2)
+        # ax2.text(0.75, 0.88, 
+        #         f'$VU_{{sin}} = {A:.2f} \\sin ( \\frac{{2\\pi}}{{{T:.1f}}} t + {phi:.2f}) + {k:.3f} t + {c:.2f}$', 
+        #         transform=ax.transAxes, fontsize=9, color='dimgray',
+        #         verticalalignment='top')
 
     # # # linear model
     # # if cum_model is not None and cum_x is not None:
@@ -453,7 +508,7 @@ if __name__ == '__main__':
     print('----- Start. -----')
     
     # 1) load csv
-    df = load_gw_obs_csv(IN_CSV)
+    df = load_gw_obs_csv_lu(IN_CSV)
 
     # 2) Wells and groups
     # 2.1 select all wells, and avoid duplicates
@@ -578,6 +633,8 @@ if __name__ == '__main__':
                 model_results.append({
                     'frame': frame_base,
                     'well_id': wid,
+                    'lon': lon,
+                    'lat': lat, 
                     'elevation': df['elevation'], 
                     # linear fit
                     'gw_linear':      gw_vel,
@@ -631,12 +688,15 @@ if __name__ == '__main__':
     # 7) plot GWL change rate vs vu change rate
     # model_df = pd.read_csv(os.path.join(BASE_DIR, 'data', 'GWLcr_VU_ModelResult.csv'))
     reg_k, reg_c = plot_reg(model_pd)
+    reg_k_all, reg_c_all = plot_reg_allVU(model_pd, IN_VUall, os.path.join(BASE_DIR, 'outputs_test'))
 
     # 8) calculate predicted gwl change rate
     vu_file = os.path.join(BASE_DIR, 'data', 'vu_shiyang_referenced.tif')
-    gw_vel_tif = os.path.join(BASE_DIR, 'outputs', 'gwl_cr_SYref.tif')
+    gw_vel_tif = os.path.join(BASE_DIR, 'outputs_test', 'gwl_cr_SYref.tif')
+    gw_vel_tif_all = os.path.join(BASE_DIR, 'outputs_test', 'gwl_cr_SYref_all.tif')
 
-    print(f'Converting ')
+    # 8.1 Converting using sperated vus results
+    print(f'Converting tif to predicted GWLcr ... (1/2)')
     with rasterio.open(vu_file) as src:
         vu = src.read(1).astype("float32")
         profile = src.profile.copy()
@@ -644,7 +704,6 @@ if __name__ == '__main__':
         if nodata is None:
             nodata = -9999.0
         mask = (vu == nodata) | np.isnan(vu)
-
 
         gw_vel = reg_k * vu + reg_c
         gw_vel = gw_vel.astype("float32")
@@ -657,6 +716,28 @@ if __name__ == '__main__':
             dst.write(gw_vel, 1)
     
     print(f'Output tif saved to {gw_vel_tif}.')
+
+    # 8.2 Converting using whole vu results
+    print(f'Converting tif to predicted GWLcr ... (2/2)')
+    with rasterio.open(vu_file) as src:
+        vu_all = src.read(1).astype("float32")
+        profile_all = src.profile.copy()
+        nodata = src.nodata
+        if nodata is None:
+            nodata = -9999.0
+        mask_all = (vu_all == nodata) | np.isnan(vu_all)
+
+        gw_vel_all = reg_k_all * vu + reg_c_all
+        gw_vel_all = gw_vel_all.astype("float32")
+        gw_vel_all[mask_all] = nodata
+
+        profile_gw_all = profile_all.copy()
+        profile_gw_all.update(dtype="float32", nodata=nodata, count=1)
+
+        with rasterio.open(gw_vel_tif_all, "w", **profile_gw_all) as dst:
+            dst.write(gw_vel_all, 1)
+    
+    print(f'Output tif saved to {gw_vel_tif_all}.')
 
     # Finish
     elapsed = time.time() - start
