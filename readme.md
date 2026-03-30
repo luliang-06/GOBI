@@ -85,7 +85,7 @@ Check outputs:
 outputs/GWL_VU_ts/*.png              # time series plots per well
 outputs/GWLcr_VU_ModelResult.csv     # model fit results
 outputs/reg_GWLcr_vs_VU.png          # regression plot between GWLcr & framed InSAR Vu
-outputs/reg_GWLcr_vs_VU.png          # regression plot between GWLcr & continuous InSAR Vu
+outputs/reg_GWLcr_vs_VUall.png       # regression plot between GWLcr & continuous InSAR Vu
 outputs/pred_GWLcr_VU.tif            # predicted GWLcr raster derived from regression result between GWLcr & framed Vu
 outputs/pred_GWLcr_VUall.tif         # predicted GWLcr raster derived from regression result between GWLcr & countinuous Vu
 ```
