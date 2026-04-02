@@ -58,52 +58,49 @@ OUT_DIR="${BASE_DIR}/outputs"
 # 	awk -F "," '(NR>1){print $3, $4, $13}' $points | gmt plot -Sc0.22 -C -W0.4p,black
 # gmt end
 
-# # Amplitude
-# # plot GWL_amp on Vu_amp Descecding
-# gmt begin ${OUT_DIR}/gwl_on_vu_amp_d png
-# 	gmt basemap -R101.7/104.7/37.3/39.3 -JX6i -B1 -BWeSn+t"GWL amplitude & InSAR Descending amplitude"
-#     gmt makecpt -Croma -T0/20 -I
-# 	gmt grdimage ${BASE_DIR}/frames/033D_05106_131313/TS_GEOCml1GACOS/cum_filt.h5_amp.nc -n+c -Q 
-# 	gmt grdimage ${BASE_DIR}/frames/135D_05023_131313/TS_GEOCml1GACOS/cum_filt.h5_amp.nc -n+c -Q
-# 	gmt grdimage ${BASE_DIR}/frames/135D_05222_131313/TS_GEOCml1GACOS/cum_filt.h5_amp.nc -n+c -Q
-#     gmt colorbar -DjTL+w1.8/13%+o1/1+h+e+ml -F+gwhite+p0.1p -Bx10+l"@~D@~GWL/@~D@~t" -By+l"mm"
-# 	awk -F "," '(NR>1){print $3, $4, $9*1000}' $points | gmt plot -Sc0.22 -C -W0.4p,black
-# gmt end
+# Amplitude
+# plot GWL_amp on Vu_amp Descecding
+gmt begin ${OUT_DIR}/gwl_on_vu_amp_d png
+	gmt basemap -R101.7/104.7/37.3/39.3 -JX6i -B1 -BWeSn+t"GWL amplitude & InSAR Descending amplitude"
+    gmt makecpt -Clajolla -T0/10
+	gmt grdimage ${BASE_DIR}/frames/033D_05106_131313/TS_GEOCml1GACOS/cum_filt.h5_amp.nc -n+c -Q 
+	gmt grdimage ${BASE_DIR}/frames/135D_05023_131313/TS_GEOCml1GACOS/cum_filt.h5_amp.nc -n+c -Q
+	gmt grdimage ${BASE_DIR}/frames/135D_05222_131313/TS_GEOCml1GACOS/cum_filt.h5_amp.nc -n+c -Q
+    gmt colorbar -DjTL+w1.8/13%+o1/1+h+e+ml -F+gwhite+p0.1p -Bx2+l"Amplitude" -By+l"mm"
+	awk -F "," '(NR>1){amp=$9; if(amp<0) amp=-amp; print $3, $4, amp}' $points | gmt plot -Sc0.22 -C -W0.4p,black
+gmt end
 
-# # plot GWL_amp on Vu_amp Ascending
-# gmt begin ${OUT_DIR}/gwl_on_vu_amp_a png
-# 	gmt basemap -R101.7/104.7/37.3/39.3 -JX6i -B1 -BWeSn+t"GWL amplitude & InSAR Ascending amplitude"
-#     gmt makecpt -Croma -T0/20 -I
-# 	gmt grdimage ${BASE_DIR}/frames/128A_05172_131313/TS_GEOCml1GACOS/cum_filt.h5_amp.nc -n+c -Q 
-# 	gmt grdimage ${BASE_DIR}/frames/055A_05021_131313/TS_GEOCml1GACOS/cum_filt.h5_amp.nc -n+c -Q
-# 	gmt grdimage ${BASE_DIR}/frames/055A_05221_131313/TS_GEOCml1GACOS/cum_filt.h5_amp.nc -n+c -Q
-#     gmt colorbar -DjTL+w1.8/13%+o1/1+h+e+ml -F+gwhite+p0.1p -Bx10+l"@~D@~GWL/@~D@~t" -By+l"mm"
-# 	awk -F "," '(NR>1){print $3, $4, $9*1000}' $points | gmt plot -Sc0.22 -C -W0.4p,black
-# gmt end
+# plot GWL_amp on Vu_amp Ascending
+gmt begin ${OUT_DIR}/gwl_on_vu_amp_a png
+	gmt basemap -R101.7/104.7/37.3/39.3 -JX6i -B1 -BWeSn+t"GWL amplitude & InSAR Ascending amplitude"
+    gmt makecpt -Clajolla -T0/10
+	gmt grdimage ${BASE_DIR}/frames/128A_05172_131313/TS_GEOCml1GACOS/cum_filt.h5_amp.nc -n+c -Q 
+	gmt grdimage ${BASE_DIR}/frames/055A_05021_131313/TS_GEOCml1GACOS/cum_filt.h5_amp.nc -n+c -Q
+	gmt grdimage ${BASE_DIR}/frames/055A_05221_131313/TS_GEOCml1GACOS/cum_filt.h5_amp.nc -n+c -Q
+    gmt colorbar -DjTL+w1.8/13%+o1/1+h+e+ml -F+gwhite+p0.1p -Bx2+l"Amplitude" -By+l"mm"
+	awk -F "," '(NR>1){amp=$9; if(amp<0) amp=-amp; print $3, $4, amp}' $points | gmt plot -Sc0.22 -C -W0.4p,black
+gmt end
 
 # dt
 # plot GWL_dt on Vu_dt Descecding
 gmt begin ${OUT_DIR}/gwl_on_vu_dt_d png
 	gmt basemap -R101.7/104.7/37.3/39.3 -JX6i -B1 -BWeSn+t"GWL phase & InSAR Descending phase"
-    gmt makecpt -CromaO -T-182/182 -I
+    gmt makecpt -CromaO -T-182/182
 	gmt grdimage ${BASE_DIR}/frames/033D_05106_131313/TS_GEOCml1GACOS/cum_filt.h5_delta_t.nc -n+c -Q 
 	gmt grdimage ${BASE_DIR}/frames/135D_05023_131313/TS_GEOCml1GACOS/cum_filt.h5_delta_t.nc -n+c -Q
 	gmt grdimage ${BASE_DIR}/frames/135D_05222_131313/TS_GEOCml1GACOS/cum_filt.h5_delta_t.nc -n+c -Q
-	gmt grdinfo ${BASE_DIR}/frames/033D_05106_131313/TS_GEOCml1GACOS/cum_filt.h5_delta_t.nc
-	gmt grdinfo ${BASE_DIR}/frames/135D_05023_131313/TS_GEOCml1GACOS/cum_filt.h5_delta_t.nc | grep "v_min"
-	gmt grdinfo ${BASE_DIR}/frames/135D_05222_131313/TS_GEOCml1GACOS/cum_filt.h5_delta_t.nc | grep "v_min"
-    gmt colorbar -DjTL+w1.8/13%+o1/1+h+ml -F+gwhite+p0.1p -Bx182+l"@~D@~GWL/@~D@~t" -By+l"days"
+    gmt colorbar -DjTL+w1.8/13%+o1/1+h+ml -F+gwhite+p0.1p -Bx182+l"Phase" -By+l"days"
 	awk -F "," '(NR>1){print $3, $4, $11*365.25/(2*3.14159265)}' $points | gmt plot -Sc0.22 -C -W0.4p,black
 gmt end
 
 # plot GWL_dt on Vu_dt Ascending
 gmt begin ${OUT_DIR}/gwl_on_vu_dt_a png
 	gmt basemap -R101.7/104.7/37.3/39.3 -JX6i -B1 -BWeSn+t"GWL phase & InSAR Ascending phase"
-    gmt makecpt -CromaO -T-182/182 -I
+    gmt makecpt -CromaO -T-182/182
 	gmt grdimage ${BASE_DIR}/frames/128A_05172_131313/TS_GEOCml1GACOS/cum_filt.h5_delta_t.nc -n+c -Q 
 	gmt grdimage ${BASE_DIR}/frames/055A_05021_131313/TS_GEOCml1GACOS/cum_filt.h5_delta_t.nc -n+c -Q
 	gmt grdimage ${BASE_DIR}/frames/055A_05221_131313/TS_GEOCml1GACOS/cum_filt.h5_delta_t.nc -n+c -Q
-    gmt colorbar -DjTL+w1.8/13%+o1/1+h+ml -F+gwhite+p0.1p -Bx182+l"@~D@~GWL/@~D@~t" -By+l"days"
+    gmt colorbar -DjTL+w1.8/13%+o1/1+h+ml -F+gwhite+p0.1p -Bx182+l"Phase" -By+l"days"
 	awk -F "," '(NR>1){print $3, $4, $11*365.25/(2*3.14159265)}' $points | gmt plot -Sc0.22 -C -W0.4p,black
 gmt end
 
