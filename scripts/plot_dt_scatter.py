@@ -80,24 +80,11 @@ def plot_dt_scatter(ts_dir, frame_id, out_dir):
     amp_path = find_tif(ts_dir, 'cum_filt.h5_amp')
     vel_path = find_tif(ts_dir, 'cum_filt.h5_vel')
 
-    if dt_path is None:
-        print(f'  [SKIP] delta_t tif not found in {ts_dir}')
-        return
-    if amp_path is None:
-        print(f'  [SKIP] amp tif not found in {ts_dir}')
-        return
-
-    print(f'  Loading: {os.path.basename(dt_path)}')
+    # load data
     dt  = load_tif(dt_path)
-    print(f'  Loading: {os.path.basename(amp_path)}')
     amp = load_tif(amp_path)
+    vel = load_tif(vel_path)
 
-    has_vel = vel_path is not None
-    if has_vel:
-        print(f'  Loading: {os.path.basename(vel_path)}')
-        vel = load_tif(vel_path)
-    else:
-        print(f'  [WARN] vel tif not found in {ts_dir}, plotting 1 subplot only')
 
     # --- plot settings ---
     sns.set_theme(style='whitegrid', context='talk', rc={'grid.linewidth': 0.8})
@@ -106,10 +93,7 @@ def plot_dt_scatter(ts_dir, frame_id, out_dir):
     plt.rcParams['xtick.labelsize'] = 12
     plt.rcParams['ytick.labelsize'] = 12
 
-    n_rows = 2 if has_vel else 1
-    fig, axes = plt.subplots(n_rows, 1, figsize=(10, 5 * n_rows), dpi=120)
-    if n_rows == 1:
-        axes = [axes]
+    fig, axes = plt.subplots(2, 1, figsize=(10, 10), dpi=120)
 
     # --- top panel: delta_t vs amplitude ---
     mask = np.isfinite(dt) & np.isfinite(amp)
@@ -118,7 +102,7 @@ def plot_dt_scatter(ts_dir, frame_id, out_dir):
         idx = np.random.choice(len(x_amp), MAX_POINTS, replace=False)
         x_amp, y_amp = x_amp[idx], y_amp[idx]
 
-    axes[0].scatter(x_amp, y_amp, s=1, alpha=0.3, color='#6cabeb', edgecolors='none')
+    axes[0].scatter(x_amp, y_amp, s=1, alpha=0.5, color='#6cabeb', edgecolors='none')
     axes[0].set_xlabel('Amplitude', fontsize=12)
     axes[0].set_ylabel('Change in \u0394t (days)', fontsize=12)
     axes[0].set_title(f'\u0394t vs Amplitude', fontsize=13)
@@ -126,18 +110,17 @@ def plot_dt_scatter(ts_dir, frame_id, out_dir):
 
 
     # --- bottom panel: delta_t vs velocity ---
-    if has_vel:
-        mask = np.isfinite(dt) & np.isfinite(vel)
-        x_vel, y_vel = vel[mask].ravel(), dt[mask].ravel()
-        if len(x_vel) > MAX_POINTS:
-            idx = np.random.choice(len(x_vel), MAX_POINTS, replace=False)
-            x_vel, y_vel = x_vel[idx], y_vel[idx]
+    mask = np.isfinite(dt) & np.isfinite(vel)
+    x_vel, y_vel = vel[mask].ravel(), dt[mask].ravel()
+    if len(x_vel) > MAX_POINTS:
+        idx = np.random.choice(len(x_vel), MAX_POINTS, replace=False)
+        x_vel, y_vel = x_vel[idx], y_vel[idx]
 
-        axes[1].scatter(x_vel, y_vel, s=1, alpha=0.3, color='#e07b6c', edgecolors='none')
-        axes[1].set_xlabel('Velocity (mm/yr)', fontsize=12)
-        axes[1].set_ylabel('Change in \u0394t (days)', fontsize=12)
-        axes[1].set_title(f'\u0394t vs Velocity', fontsize=13)
-        axes[1].set_xlim(np.nanpercentile(x_vel, 1), np.nanpercentile(x_vel, 99))
+    axes[1].scatter(x_vel, y_vel, s=1, alpha=0.5, color='#e07b6c', edgecolors='none')
+    axes[1].set_xlabel('Velocity (mm/yr)', fontsize=12)
+    axes[1].set_ylabel('Change in \u0394t (days)', fontsize=12)
+    axes[1].set_title(f'\u0394t vs Velocity', fontsize=13)
+    axes[1].set_xlim(np.nanpercentile(x_vel, 1), np.nanpercentile(x_vel, 99))
 
 
     fig.suptitle(frame_id, fontsize=14, fontweight='bold')
@@ -146,7 +129,7 @@ def plot_dt_scatter(ts_dir, frame_id, out_dir):
     out_path = os.path.join(out_dir, f'dt_scatter_{frame_id}.png')
     plt.savefig(out_path, bbox_inches='tight')
     plt.close()
-    print(f'  Saved: {out_path}')
+    print(f'Saved: {out_path}')
 
 
 if __name__ == '__main__':
