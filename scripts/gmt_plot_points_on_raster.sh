@@ -58,7 +58,7 @@ OUT_DIR="${BASE_DIR}/outputs"
 # 	awk -F "," '(NR>1){print $3, $4, $13}' $points | gmt plot -Sc0.22 -C -W0.4p,black
 # gmt end
 
-# Amplitude
+# ------ Amplitude ------
 # plot GWL_amp on Vu_amp Descecding
 gmt begin ${OUT_DIR}/gwl_on_vu_amp_d png
 	gmt basemap -R101.7/104.7/37.3/39.3 -JX6i -B1 -BWeSn+t"GWL amplitude & InSAR Descending amplitude"
@@ -81,7 +81,7 @@ gmt begin ${OUT_DIR}/gwl_on_vu_amp_a png
 	awk -F "," '(NR>1){amp=$9; if(amp<0) amp=-amp; print $3, $4, amp}' $points | gmt plot -Sc0.22 -C -W0.4p,black
 gmt end
 
-# dt
+# ------ dt ------
 # plot GWL_dt on Vu_dt Descecding
 gmt begin ${OUT_DIR}/gwl_on_vu_dt_d png
 	gmt basemap -R101.7/104.7/37.3/39.3 -JX6i -B1 -BWeSn+t"GWL phase & InSAR Descending phase"
@@ -104,7 +104,7 @@ gmt begin ${OUT_DIR}/gwl_on_vu_dt_a png
 	awk -F "," '(NR>1){print $3, $4, $11*365.25/(2*3.14159265)}' $points | gmt plot -Sc0.22 -C -W0.4p,black
 gmt end
 
-# vstd
+# ------ vstd ------
 # plot GWL_vstd on Vu_vstd Descecding
 gmt begin ${OUT_DIR}/gwl_on_vu_vstd_d png
 	gmt basemap -R101.7/104.7/37.3/39.3 -JX6i -B1 -BWeSn+t"GWL vstd & InSAR Descending vstd"
