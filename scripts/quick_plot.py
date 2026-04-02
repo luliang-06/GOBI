@@ -37,7 +37,7 @@ last_update = '2026-01-26'
 start = time.time()
 print('\n{} ver{} {} {}'.format(os.path.basename(sys.argv[0]), ver, last_update, author))
 
-ref_tif = gdal.Open('/exports/geos.ed.ac.uk/comet/lliang/GOBI_proj/data/vu_shiyang_referenced.tif')
+ref_tif = gdal.Open('/exports/geos.ed.ac.uk/comet/lliang/GOBI_proj/frames/033D_05106_131313/TS_GEOCml1GACOS/cum_filt.h5_amp.tif')
 data = ref_tif.GetRasterBand(1).ReadAsArray()
 print("shape:", data.shape)
 
