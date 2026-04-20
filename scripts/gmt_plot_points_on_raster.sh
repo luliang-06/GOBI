@@ -47,158 +47,158 @@ OUT_DIR="${BASE_DIR}/outputs"
 # 	gmt colorbar -DjTL+w1.25i/0.12i+o1/1+h+e+ml -F+gwhite+p0.1p -Bx1+l"@~D@~GWL/@~D@~t  (m/yr)" --FONT_ANNOT_PRIMARY=18p
 # gmt end
 
-# # ------ Amplitude ------
-# # plot GWL_amp on Vu_amp Descecding
-# gmt begin ${OUT_DIR}/gwl_on_vu_amp_d png
-# 	gmt basemap -R101.7/104.7/37.3/39.3 -JX6i -B1 -BWeSn+t"GWL amplitude & InSAR Descending amplitude"
-#     gmt makecpt -Coslo -T0/5 -I
-# 	gmt grdimage ${BASE_DIR}/frames/033D_05106_131313/TS_GEOCml1GACOS/cum_fd.h5_amp.nc -n+c -Q
-# 	gmt grdimage ${BASE_DIR}/frames/135D_05023_131313/TS_GEOCml1GACOS/cum_fd.h5_amp.nc -n+c -Q
-# 	gmt grdimage ${BASE_DIR}/frames/135D_05222_131313/TS_GEOCml1GACOS/cum_fd.h5_amp.nc -n+c -Q
-# 	gmt plot $basin -W0.8p,black
-# 	awk -F "," '{amp=$9; if(amp<0) amp=-amp; print $3, $4, amp}' $points | gmt plot -Sc0.22 -C -W0.4p,black
-# 	gmt colorbar -DjTL+w1.25i/0.12i+o1/1+h+e+ml -F+gwhite+p0.1p -Bx5+l"Amplitude (mm)" --FONT_ANNOT_PRIMARY=18p
-# gmt end
+# ------ Amplitude ------
+# plot GWL_amp on Vu_amp Ascending
+gmt begin ${OUT_DIR}/gwl_on_vu_amp_a png
+	gmt basemap -R101.7/104.7/37.3/39.3 -JX6i -B1 -BWeSn+t"GWL amplitude & InSAR Ascending amplitude"
+    gmt makecpt -Coslo -T0/5 -I
+	gmt grdimage ${BASE_DIR}/frames/128A_05172_131313/TS_GEOCml1GACOS/cum_fd.h5_amp.nc -n+c -Q 
+	gmt grdimage ${BASE_DIR}/frames/055A_05021_131313/TS_GEOCml1GACOS/cum_fd.h5_amp.nc -n+c -Q
+	gmt grdimage ${BASE_DIR}/frames/055A_05221_131313/TS_GEOCml1GACOS/cum_fd.h5_amp.nc -n+c -Q
+	gmt plot $basin -W0.8p,black
+	awk -F "," '{amp=$9; if(amp<0) amp=-amp; print $3, $4, amp}' $points | gmt plot -Sc0.22 -C -W0.4p,black
+	gmt colorbar -DjTL+w1.25i/0.12i+o1/1+h+e+ml -F+gwhite+p0.1p -Bx5+l"Amplitude (mm)" --FONT_ANNOT_PRIMARY=18p
+gmt end
 
-# # plot GWL_amp on Vu_amp Ascending
-# gmt begin ${OUT_DIR}/gwl_on_vu_amp_a png
-# 	gmt basemap -R101.7/104.7/37.3/39.3 -JX6i -B1 -BwESn+t"GWL amplitude & InSAR Ascending amplitude"
-#     gmt makecpt -Coslo -T0/5 -I
-# 	gmt grdimage ${BASE_DIR}/frames/128A_05172_131313/TS_GEOCml1GACOS/cum_fd.h5_amp.nc -n+c -Q 
-# 	gmt grdimage ${BASE_DIR}/frames/055A_05021_131313/TS_GEOCml1GACOS/cum_fd.h5_amp.nc -n+c -Q
-# 	gmt grdimage ${BASE_DIR}/frames/055A_05221_131313/TS_GEOCml1GACOS/cum_fd.h5_amp.nc -n+c -Q
-# 	gmt plot $basin -W0.8p,black
-# 	awk -F "," '{amp=$9; if(amp<0) amp=-amp; print $3, $4, amp}' $points | gmt plot -Sc0.22 -C -W0.4p,black
-# 	gmt colorbar -DjTL+w1.25i/0.12i+o1/1+h+e+ml -F+gwhite+p0.1p -Bx5+l"Amplitude (mm)" --FONT_ANNOT_PRIMARY=18p
-# gmt end
+# plot GWL_amp on Vu_amp Descecding
+gmt begin ${OUT_DIR}/gwl_on_vu_amp_d png
+	gmt basemap -R101.7/104.7/37.3/39.3 -JX6i -B1 -BwESn+t"GWL amplitude & InSAR Descending amplitude"
+    gmt makecpt -Coslo -T0/5 -I
+	gmt grdimage ${BASE_DIR}/frames/033D_05106_131313/TS_GEOCml1GACOS/cum_fd.h5_amp.nc -n+c -Q
+	gmt grdimage ${BASE_DIR}/frames/135D_05023_131313/TS_GEOCml1GACOS/cum_fd.h5_amp.nc -n+c -Q
+	gmt grdimage ${BASE_DIR}/frames/135D_05222_131313/TS_GEOCml1GACOS/cum_fd.h5_amp.nc -n+c -Q
+	gmt plot $basin -W0.8p,black
+	awk -F "," '{amp=$9; if(amp<0) amp=-amp; print $3, $4, amp}' $points | gmt plot -Sc0.22 -C -W0.4p,black
+	gmt colorbar -DjTL+w1.25i/0.12i+o1/1+h+e+ml -F+gwhite+p0.1p -Bx5+l"Amplitude (mm)" --FONT_ANNOT_PRIMARY=18p
+gmt end
 
-# # ------ ASTD ------
-# # plot GWL_astd on Vu_astd Descecding
-# gmt begin ${OUT_DIR}/gwl_on_vu_astd_d png
-# 	gmt basemap -R101.7/104.7/37.3/39.3 -JX6i -B1 -BWeSn+t"GWL astd & InSAR Descending astd"
-#     gmt makecpt -Cnuuk -T0/1 -I
-# 	gmt grdimage ${BASE_DIR}/frames/033D_05106_131313/TS_GEOCml1GACOS/cum_fd.h5_astd.nc -n+c -Q
-# 	gmt grdimage ${BASE_DIR}/frames/135D_05023_131313/TS_GEOCml1GACOS/cum_fd.h5_astd.nc -n+c -Q
-# 	gmt grdimage ${BASE_DIR}/frames/135D_05222_131313/TS_GEOCml1GACOS/cum_fd.h5_astd.nc -n+c -Q
-# 	gmt plot $basin -W0.8p,black
-# 	awk -F "," '{print $3, $4, $10}' $points | gmt plot -Sc0.22 -C -W0.4p,black
-# 	gmt colorbar -DjTL+w1.25i/0.12i+o1/1+h+e+ml -F+gwhite+p0.1p -Bx1+l"Amplitude Std (mm)" --FONT_ANNOT_PRIMARY=18p
-# gmt end
+# ------ ASTD ------
+# plot GWL_amp on Vu_amp Ascending
+gmt begin ${OUT_DIR}/gwl_on_vu_astd_a png
+	gmt basemap -R101.7/104.7/37.3/39.3 -JX6i -B1 -BWeSn+t"GWL astd & InSAR Ascending astd"
+    gmt makecpt -Cnuuk -T0/1 -I
+	gmt grdimage ${BASE_DIR}/frames/128A_05172_131313/TS_GEOCml1GACOS/cum_fd.h5_astd.nc -n+c -Q 
+	gmt grdimage ${BASE_DIR}/frames/055A_05021_131313/TS_GEOCml1GACOS/cum_fd.h5_astd.nc -n+c -Q
+	gmt grdimage ${BASE_DIR}/frames/055A_05221_131313/TS_GEOCml1GACOS/cum_fd.h5_astd.nc -n+c -Q
+	gmt plot $basin -W0.8p,black
+	awk -F "," '{print $3, $4, $10}' $points | gmt plot -Sc0.22 -C -W0.4p,black
+	gmt colorbar -DjTL+w1.25i/0.12i+o1/1+h+e+ml -F+gwhite+p0.1p -Bx1+l"Amplitude Std (mm)" --FONT_ANNOT_PRIMARY=18p
+gmt end
 
-# # plot GWL_amp on Vu_amp Ascending
-# gmt begin ${OUT_DIR}/gwl_on_vu_astd_a png
-# 	gmt basemap -R101.7/104.7/37.3/39.3 -JX6i -B1 -BwESn+t"GWL astd & InSAR Ascending astd"
-#     gmt makecpt -Cnuuk -T0/1 -I
-# 	gmt grdimage ${BASE_DIR}/frames/128A_05172_131313/TS_GEOCml1GACOS/cum_fd.h5_astd.nc -n+c -Q 
-# 	gmt grdimage ${BASE_DIR}/frames/055A_05021_131313/TS_GEOCml1GACOS/cum_fd.h5_astd.nc -n+c -Q
-# 	gmt grdimage ${BASE_DIR}/frames/055A_05221_131313/TS_GEOCml1GACOS/cum_fd.h5_astd.nc -n+c -Q
-# 	gmt plot $basin -W0.8p,black
-# 	awk -F "," '{print $3, $4, $10}' $points | gmt plot -Sc0.22 -C -W0.4p,black
-# 	gmt colorbar -DjTL+w1.25i/0.12i+o1/1+h+e+ml -F+gwhite+p0.1p -Bx1+l"Amplitude Std (mm)" --FONT_ANNOT_PRIMARY=18p
-# gmt end
+# plot GWL_astd on Vu_astd Descecding
+gmt begin ${OUT_DIR}/gwl_on_vu_astd_d png
+	gmt basemap -R101.7/104.7/37.3/39.3 -JX6i -B1 -BwESn+t"GWL astd & InSAR Descending astd"
+    gmt makecpt -Cnuuk -T0/1 -I
+	gmt grdimage ${BASE_DIR}/frames/033D_05106_131313/TS_GEOCml1GACOS/cum_fd.h5_astd.nc -n+c -Q
+	gmt grdimage ${BASE_DIR}/frames/135D_05023_131313/TS_GEOCml1GACOS/cum_fd.h5_astd.nc -n+c -Q
+	gmt grdimage ${BASE_DIR}/frames/135D_05222_131313/TS_GEOCml1GACOS/cum_fd.h5_astd.nc -n+c -Q
+	gmt plot $basin -W0.8p,black
+	awk -F "," '{print $3, $4, $10}' $points | gmt plot -Sc0.22 -C -W0.4p,black
+	gmt colorbar -DjTL+w1.25i/0.12i+o1/1+h+e+ml -F+gwhite+p0.1p -Bx1+l"Amplitude Std (mm)" --FONT_ANNOT_PRIMARY=18p
+gmt end
 
-# # ------ dt ------
-# # plot GWL_dt on Vu_dt Descecding
-# gmt begin ${OUT_DIR}/gwl_on_vu_dt_d png
-# 	gmt basemap -R101.7/104.7/37.3/39.3 -JX6i -B1 -BWeSn+t"GWL phase & InSAR Descending phase"
-#     gmt makecpt -CromaO -T0/365.25
-# 	gmt grdimage ${BASE_DIR}/frames/135D_05023_131313/TS_GEOCml1GACOS/cum_fd.h5_delta_t.nc -n+c -Q
-# 	gmt grdimage ${BASE_DIR}/frames/033D_05106_131313/TS_GEOCml1GACOS/cum_fd.h5_delta_t.nc -n+c -Q
-# 	gmt grdimage ${BASE_DIR}/frames/135D_05222_131313/TS_GEOCml1GACOS/cum_fd.h5_delta_t.nc -n+c -Q
-# 	gmt plot $basin -W0.8p,black
-# 	awk -F "," '{print $3, $4, $11}' $points | gmt plot -Sc0.22 -C -W0.4p,black
-#     gmt colorbar -DjTL+w1.25i/0.12i+o1/1+h+ml -F+gwhite+p0.1p -Bx365.25+l"Phase (days)" --FONT_ANNOT_PRIMARY=18p
-# gmt end
+# ------ dt ------
+# plot GWL_dt on Vu_dt Ascending
+gmt begin ${OUT_DIR}/gwl_on_vu_dt_a png
+	gmt basemap -R101.7/104.7/37.3/39.3 -JX6i -B1 -BWeSn+t"GWL phase & InSAR Ascending phase"
+    gmt makecpt -CromaO -T0/365.25
+	gmt grdimage ${BASE_DIR}/frames/055A_05221_131313/TS_GEOCml1GACOS/cum_fd.h5_delta_t.nc -n+c -Q
+	gmt grdimage ${BASE_DIR}/frames/055A_05021_131313/TS_GEOCml1GACOS/cum_fd.h5_delta_t.nc -n+c -Q
+	gmt grdimage ${BASE_DIR}/frames/128A_05172_131313/TS_GEOCml1GACOS/cum_fd.h5_delta_t.nc -n+c -Q 
+	gmt plot $basin -W0.8p,black
+	awk -F "," '{print $3, $4, $11}' $points | gmt plot -Sc0.22 -C -W0.4p,black
+    gmt colorbar -DjTL+w1.25i/0.12i+o1/1+h+ml -F+gwhite+p0.1p -Bx365.25+l"Phase (days)" --FONT_ANNOT_PRIMARY=18p
+gmt end
 
-# # plot GWL_dt on Vu_dt Ascending
-# gmt begin ${OUT_DIR}/gwl_on_vu_dt_a png
-# 	gmt basemap -R101.7/104.7/37.3/39.3 -JX6i -B1 -BwESn+t"GWL phase & InSAR Ascending phase"
-#     gmt makecpt -CromaO -T0/365.25
-# 	gmt grdimage ${BASE_DIR}/frames/055A_05221_131313/TS_GEOCml1GACOS/cum_fd.h5_delta_t.nc -n+c -Q
-# 	gmt grdimage ${BASE_DIR}/frames/055A_05021_131313/TS_GEOCml1GACOS/cum_fd.h5_delta_t.nc -n+c -Q
-# 	gmt grdimage ${BASE_DIR}/frames/128A_05172_131313/TS_GEOCml1GACOS/cum_fd.h5_delta_t.nc -n+c -Q 
-# 	gmt plot $basin -W0.8p,black
-# 	awk -F "," '{print $3, $4, $11}' $points | gmt plot -Sc0.22 -C -W0.4p,black
-#     gmt colorbar -DjTL+w1.25i/0.12i+o1/1+h+ml -F+gwhite+p0.1p -Bx365.25+l"Phase (days)" --FONT_ANNOT_PRIMARY=18p
-# gmt end
+# plot GWL_dt on Vu_dt Descecding
+gmt begin ${OUT_DIR}/gwl_on_vu_dt_d png
+	gmt basemap -R101.7/104.7/37.3/39.3 -JX6i -B1 -BwESn+t"GWL phase & InSAR Descending phase"
+    gmt makecpt -CromaO -T0/365.25
+	gmt grdimage ${BASE_DIR}/frames/135D_05023_131313/TS_GEOCml1GACOS/cum_fd.h5_delta_t.nc -n+c -Q
+	gmt grdimage ${BASE_DIR}/frames/033D_05106_131313/TS_GEOCml1GACOS/cum_fd.h5_delta_t.nc -n+c -Q
+	gmt grdimage ${BASE_DIR}/frames/135D_05222_131313/TS_GEOCml1GACOS/cum_fd.h5_delta_t.nc -n+c -Q
+	gmt plot $basin -W0.8p,black
+	awk -F "," '{print $3, $4, $11}' $points | gmt plot -Sc0.22 -C -W0.4p,black
+    gmt colorbar -DjTL+w1.25i/0.12i+o1/1+h+ml -F+gwhite+p0.1p -Bx365.25+l"Phase (days)" --FONT_ANNOT_PRIMARY=18p
+gmt end
 
-# # ------ diff of dt ------
-# gmt makecpt -Croma -T-10/10 -I > vu.cpt
-# gmt makecpt -Cturku -T0/180 -I -H > timelag.cpt
-# # plot dt diff on Vu Descecding
-# gmt begin ${OUT_DIR}/time_lag_on_vu_d png
-# 	gmt basemap -R101.7/104.7/37.3/39.3 -JX6i -B1 -BWeSn+t"Time Lag & Vel Descending"
-# 	gmt grdimage ${BASE_DIR}/frames/033D_05106_131313/TS_GEOCml1GACOS/cum_fd.h5_vel.nc -n+c -Q -Cvu.cpt
-# 	gmt grdimage ${BASE_DIR}/frames/135D_05023_131313/TS_GEOCml1GACOS/cum_fd.h5_vel.nc -n+c -Q -Cvu.cpt
-# 	gmt grdimage ${BASE_DIR}/frames/135D_05222_131313/TS_GEOCml1GACOS/cum_fd.h5_vel.nc -n+c -Q -Cvu.cpt
-# 	gmt plot $basin -W0.8p,black
-# 	awk -F "," '{lag=$21; if(lag<0) lag=-lag; print $3, $4, lag}' $points | gmt plot -Sc0.22 -Ctimelag.cpt -W0.4p,black
-#     gmt colorbar -DjTL+w1.25i/0.12i+o1/1+h+e+ml -Cvu.cpt -F+gwhite+p0.1p -Bx10+l"Velocity (m/yr)" --FONT_ANNOT_PRIMARY=18p
-# 	gmt colorbar -DjTR+w1.25i/0.12i+o1/1+h+e+ml -Ctimelag.cpt -F+gwhite+p0.1p -Bx180+l"Time lag (days)" --FONT_ANNOT_PRIMARY=18p
-# gmt end
+# ------ diff of dt ------
+gmt makecpt -Croma -T-10/10 -I > vu.cpt
+gmt makecpt -Cturku -T0/180 -I -H > timelag.cpt
+# plot dt diff on Vu Ascending
+gmt begin ${OUT_DIR}/time_lag_on_vu_a png
+	gmt basemap -R101.7/104.7/37.3/39.3 -JX6i -B1 -BWeSn+t"Time Lag & Vel Ascending"
+	gmt grdimage ${BASE_DIR}/frames/128A_05172_131313/TS_GEOCml1GACOS/cum_fd.h5_vel.nc -n+c -Q -Cvu.cpt
+	gmt grdimage ${BASE_DIR}/frames/055A_05021_131313/TS_GEOCml1GACOS/cum_fd.h5_vel.nc -n+c -Q -Cvu.cpt
+	gmt grdimage ${BASE_DIR}/frames/055A_05221_131313/TS_GEOCml1GACOS/cum_fd.h5_vel.nc -n+c -Q -Cvu.cpt
+	gmt plot $basin -W0.8p,black
+	awk -F "," '{lag=$21; if(lag<0) lag=-lag; print $3, $4, lag}' $points | gmt plot -Sc0.22 -Ctimelag.cpt -W0.4p,black
+    gmt colorbar -DjTL+w1.25i/0.12i+o1/1+h+e+ml -Cvu.cpt -F+gwhite+p0.1p -Bx10+l"Velocity (m/yr)" --FONT_ANNOT_PRIMARY=18p
+	gmt colorbar -DjTR+w1.25i/0.12i+o1/1+h+e+ml -Ctimelag.cpt -F+gwhite+p0.1p -Bx180+l"Time lag (days)" --FONT_ANNOT_PRIMARY=18p
+gmt end
 
-# # plot dt diff on Vu Ascending
-# gmt begin ${OUT_DIR}/time_lag_on_vu_a png
-# 	gmt basemap -R101.7/104.7/37.3/39.3 -JX6i -B1 -BwESn+t"Time Lag & Vel Ascending"
-# 	gmt grdimage ${BASE_DIR}/frames/128A_05172_131313/TS_GEOCml1GACOS/cum_fd.h5_vel.nc -n+c -Q -Cvu.cpt
-# 	gmt grdimage ${BASE_DIR}/frames/055A_05021_131313/TS_GEOCml1GACOS/cum_fd.h5_vel.nc -n+c -Q -Cvu.cpt
-# 	gmt grdimage ${BASE_DIR}/frames/055A_05221_131313/TS_GEOCml1GACOS/cum_fd.h5_vel.nc -n+c -Q -Cvu.cpt
-# 	gmt plot $basin -W0.8p,black
-# 	awk -F "," '{lag=$21; if(lag<0) lag=-lag; print $3, $4, lag}' $points | gmt plot -Sc0.22 -Ctimelag.cpt -W0.4p,black
-#     gmt colorbar -DjTL+w1.25i/0.12i+o1/1+h+e+ml -Cvu.cpt -F+gwhite+p0.1p -Bx10+l"Velocity (m/yr)" --FONT_ANNOT_PRIMARY=18p
-# 	gmt colorbar -DjTR+w1.25i/0.12i+o1/1+h+e+ml -Ctimelag.cpt -F+gwhite+p0.1p -Bx180+l"Time lag (days)" --FONT_ANNOT_PRIMARY=18p
-# gmt end
+# plot dt diff on Vu Descecding
+gmt begin ${OUT_DIR}/time_lag_on_vu_d png
+	gmt basemap -R101.7/104.7/37.3/39.3 -JX6i -B1 -BwESn+t"Time Lag & Vel Descending"
+	gmt grdimage ${BASE_DIR}/frames/033D_05106_131313/TS_GEOCml1GACOS/cum_fd.h5_vel.nc -n+c -Q -Cvu.cpt
+	gmt grdimage ${BASE_DIR}/frames/135D_05023_131313/TS_GEOCml1GACOS/cum_fd.h5_vel.nc -n+c -Q -Cvu.cpt
+	gmt grdimage ${BASE_DIR}/frames/135D_05222_131313/TS_GEOCml1GACOS/cum_fd.h5_vel.nc -n+c -Q -Cvu.cpt
+	gmt plot $basin -W0.8p,black
+	awk -F "," '{lag=$21; if(lag<0) lag=-lag; print $3, $4, lag}' $points | gmt plot -Sc0.22 -Ctimelag.cpt -W0.4p,black
+    gmt colorbar -DjTL+w1.25i/0.12i+o1/1+h+e+ml -Cvu.cpt -F+gwhite+p0.1p -Bx10+l"Velocity (m/yr)" --FONT_ANNOT_PRIMARY=18p
+	gmt colorbar -DjTR+w1.25i/0.12i+o1/1+h+e+ml -Ctimelag.cpt -F+gwhite+p0.1p -Bx180+l"Time lag (days)" --FONT_ANNOT_PRIMARY=18p
+gmt end
 
-# # ------ VU ------
-# # plot GWL_cr on Vu Descecding
-# gmt begin ${OUT_DIR}/vu_d png
-# 	gmt basemap -R99.9/105.5/36.5/41.1 -JX6i -B1 -BWeSn+t"Filted Deramped Velocity (Descending Track)"
-# 	gmt grdimage @earth_relief_03s -I+d -Cgray
-# 	gmt makecpt -Croma -T-10/10 -I
-# 	gmt grdimage ${BASE_DIR}/frames/033D_05106_131313/TS_GEOCml1GACOS/cum_fd.h5_vel.nc -n+c -Q
-# 	gmt grdimage ${BASE_DIR}/frames/135D_05023_131313/TS_GEOCml1GACOS/cum_fd.h5_vel.nc -n+c -Q
-# 	gmt grdimage ${BASE_DIR}/frames/135D_05222_131313/TS_GEOCml1GACOS/cum_fd.h5_vel.nc -n+c -Q
-# 	gmt plot $basin -W0.8p,black
-# 	# awk -F "," '{print $3, $4, $13*10}' $points | gmt plot -Sc0.22 -C -W0.4p,black
-# 	gmt colorbar -DjTL+w1.25i/0.12i+o1/1+h+e+ml -F+gwhite+p0.1p -Bx10+l"velocity (m/yr)" --FONT_ANNOT_PRIMARY=18p
-# gmt end
+# ------ VU ------
+# plot GWL_cr on Vu Ascending
+gmt begin ${OUT_DIR}/vu_a png
+	gmt basemap -R99.9/105.5/36.5/41.1 -JX6i -B1 -BWeSn+t"Filted Deramped Velocity (Ascending Track)"
+	gmt grdimage @earth_relief_03s -I+d -Cgray
+	gmt makecpt -Croma -T-10/10 -I
+	gmt grdimage ${BASE_DIR}/frames/128A_05172_131313/TS_GEOCml1GACOS/cum_fd.h5_vel.nc -n+c -Q 
+	gmt grdimage ${BASE_DIR}/frames/055A_05021_131313/TS_GEOCml1GACOS/cum_fd.h5_vel.nc -n+c -Q
+	gmt grdimage ${BASE_DIR}/frames/055A_05221_131313/TS_GEOCml1GACOS/cum_fd.h5_vel.nc -n+c -Q
+	gmt plot $basin -W0.8p,black
+	# awk -F "," '{print $3, $4, $13*10}' $points | gmt plot -Sc0.22 -C -W0.4p,black
+	gmt colorbar -DjTL+w1.25i/0.12i+o1/1+h+e+ml -F+gwhite+p0.1p -Bx10+l"Velocity (m/yr)" --FONT_ANNOT_PRIMARY=18p
+gmt end
 
-# # plot GWL_cr on Vu Ascending
-# gmt begin ${OUT_DIR}/vu_a png
-# 	gmt basemap -R99.9/105.5/36.5/41.1 -JX6i -B1 -BwESn+t"Filted Deramped Velocity (Ascending Track)"
-# 	gmt grdimage @earth_relief_03s -I+d -Cgray
-# 	gmt makecpt -Croma -T-10/10 -I
-# 	gmt grdimage ${BASE_DIR}/frames/128A_05172_131313/TS_GEOCml1GACOS/cum_fd.h5_vel.nc -n+c -Q 
-# 	gmt grdimage ${BASE_DIR}/frames/055A_05021_131313/TS_GEOCml1GACOS/cum_fd.h5_vel.nc -n+c -Q
-# 	gmt grdimage ${BASE_DIR}/frames/055A_05221_131313/TS_GEOCml1GACOS/cum_fd.h5_vel.nc -n+c -Q
-# 	gmt plot $basin -W0.8p,black
-# 	# awk -F "," '{print $3, $4, $13*10}' $points | gmt plot -Sc0.22 -C -W0.4p,black
-# 	gmt colorbar -DjTL+w1.25i/0.12i+o1/1+h+e+ml -F+gwhite+p0.1p -Bx10+l"Velocity (m/yr)" --FONT_ANNOT_PRIMARY=18p
-# gmt end
+# plot GWL_cr on Vu Descecding
+gmt begin ${OUT_DIR}/vu_d png
+	gmt basemap -R99.9/105.5/36.5/41.1 -JX6i -B1 -BwESn+t"Filted Deramped Velocity (Descending Track)"
+	gmt grdimage @earth_relief_03s -I+d -Cgray
+	gmt makecpt -Croma -T-10/10 -I
+	gmt grdimage ${BASE_DIR}/frames/033D_05106_131313/TS_GEOCml1GACOS/cum_fd.h5_vel.nc -n+c -Q
+	gmt grdimage ${BASE_DIR}/frames/135D_05023_131313/TS_GEOCml1GACOS/cum_fd.h5_vel.nc -n+c -Q
+	gmt grdimage ${BASE_DIR}/frames/135D_05222_131313/TS_GEOCml1GACOS/cum_fd.h5_vel.nc -n+c -Q
+	gmt plot $basin -W0.8p,black
+	# awk -F "," '{print $3, $4, $13*10}' $points | gmt plot -Sc0.22 -C -W0.4p,black
+	gmt colorbar -DjTL+w1.25i/0.12i+o1/1+h+e+ml -F+gwhite+p0.1p -Bx10+l"velocity (m/yr)" --FONT_ANNOT_PRIMARY=18p
+gmt end
 
-# # ------ vstd ------
-# # plot GWL_vstd on Vu_vstd Descecding
-# gmt begin ${OUT_DIR}/vstd_d png
-# 	gmt basemap -R99.9/105.5/36.5/41.1 -JX6i -B1 -BWeSn+t"Filted Deramped Velocity Std (Descending Track)"
-# 	gmt grdimage @earth_relief_03s -I+d -Cgray
-# 	gmt makecpt -CbatlowW -T0/1 -I
-# 	gmt grdimage ${BASE_DIR}/frames/033D_05106_131313/TS_GEOCml1GACOS/cum_fd.h5_vstd.nc -n+c -Q 
-# 	gmt grdimage ${BASE_DIR}/frames/135D_05023_131313/TS_GEOCml1GACOS/cum_fd.h5_vstd.nc -n+c -Q
-# 	gmt grdimage ${BASE_DIR}/frames/135D_05222_131313/TS_GEOCml1GACOS/cum_fd.h5_vstd.nc -n+c -Q
-# 	gmt plot $basin -W0.8p,black
-#     gmt colorbar -DjTL+w1.25i/0.12i+o1/1+h+e+ml -F+gwhite+p0.1p -Bx1+l"Vstd (mm/yr)" --FONT_ANNOT_PRIMARY=18p
-# 	# awk -F "," '(NR>1){print $3, $4, $14*1000}' $points | gmt plot -Sc0.22 -C -W0.4p,black
-# gmt end
+# ------ vstd ------
+# plot GWL_vstd on Vu_vstd Ascending
+gmt begin ${OUT_DIR}/vstd_a png
+	gmt basemap -R99.9/105.5/36.5/41.1 -JX6i -B1 -BWeSn+t"Filted Deramped Velocity Std (Ascending Track)"
+	gmt grdimage @earth_relief_03s -I+d -Cgray
+	gmt makecpt -CbatlowW -T0/1 -I
+	gmt grdimage ${BASE_DIR}/frames/128A_05172_131313/TS_GEOCml1GACOS/cum_fd.h5_vstd.nc -n+c -Q 
+	gmt grdimage ${BASE_DIR}/frames/055A_05021_131313/TS_GEOCml1GACOS/cum_fd.h5_vstd.nc -n+c -Q
+	gmt grdimage ${BASE_DIR}/frames/055A_05221_131313/TS_GEOCml1GACOS/cum_fd.h5_vstd.nc -n+c -Q
+	gmt plot $basin -W0.8p,black
+    gmt colorbar -DjTL+w1.25i/0.12i+o1/1+h+e+ml -F+gwhite+p0.1p -Bx1+l"Vstd (mm/yr)" --FONT_ANNOT_PRIMARY=18p
+	# awk -F "," '(NR>1){print $3, $4, $14*1000}' $points | gmt plot -Sc0.22 -C -W0.4p,black
+gmt end
 
-# # plot GWL_vstd on Vu_vstd Ascending
-# gmt begin ${OUT_DIR}/vstd_a png
-# 	gmt basemap -R99.9/105.5/36.5/41.1 -JX6i -B1 -BwESn+t"Filted Deramped Velocity Std (Ascending Track)"
-# 	gmt grdimage @earth_relief_03s -I+d -Cgray
-# 	gmt makecpt -CbatlowW -T0/1 -I
-# 	gmt grdimage ${BASE_DIR}/frames/128A_05172_131313/TS_GEOCml1GACOS/cum_fd.h5_vstd.nc -n+c -Q 
-# 	gmt grdimage ${BASE_DIR}/frames/055A_05021_131313/TS_GEOCml1GACOS/cum_fd.h5_vstd.nc -n+c -Q
-# 	gmt grdimage ${BASE_DIR}/frames/055A_05221_131313/TS_GEOCml1GACOS/cum_fd.h5_vstd.nc -n+c -Q
-# 	gmt plot $basin -W0.8p,black
-#     gmt colorbar -DjTL+w1.25i/0.12i+o1/1+h+e+ml -F+gwhite+p0.1p -Bx1+l"Vstd (mm/yr)" --FONT_ANNOT_PRIMARY=18p
-# 	# awk -F "," '(NR>1){print $3, $4, $14*1000}' $points | gmt plot -Sc0.22 -C -W0.4p,black
-# gmt end
+# plot GWL_vstd on Vu_vstd Descecding
+gmt begin ${OUT_DIR}/vstd_d png
+	gmt basemap -R99.9/105.5/36.5/41.1 -JX6i -B1 -BwESn+t"Filted Deramped Velocity Std (Descending Track)"
+	gmt grdimage @earth_relief_03s -I+d -Cgray
+	gmt makecpt -CbatlowW -T0/1 -I
+	gmt grdimage ${BASE_DIR}/frames/033D_05106_131313/TS_GEOCml1GACOS/cum_fd.h5_vstd.nc -n+c -Q 
+	gmt grdimage ${BASE_DIR}/frames/135D_05023_131313/TS_GEOCml1GACOS/cum_fd.h5_vstd.nc -n+c -Q
+	gmt grdimage ${BASE_DIR}/frames/135D_05222_131313/TS_GEOCml1GACOS/cum_fd.h5_vstd.nc -n+c -Q
+	gmt plot $basin -W0.8p,black
+    gmt colorbar -DjTL+w1.25i/0.12i+o1/1+h+e+ml -F+gwhite+p0.1p -Bx1+l"Vstd (mm/yr)" --FONT_ANNOT_PRIMARY=18p
+	# awk -F "," '(NR>1){print $3, $4, $14*1000}' $points | gmt plot -Sc0.22 -C -W0.4p,black
+gmt end
