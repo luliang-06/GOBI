@@ -37,12 +37,13 @@ import pygmt
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 SY_BOUNDARY = "/exports/geos.ed.ac.uk/comet/lliang/GOBI_proj/data/wuwei_level5_basin.gmt"
 FRAME_DIRS = [
-    # "/exports/geos.ed.ac.uk/comet/lliang/GOBI_proj/frames/033D_05106_131313/",
-    # "/exports/geos.ed.ac.uk/comet/lliang/GOBI_proj/frames/135D_05023_131313/",
-    # "/exports/geos.ed.ac.uk/comet/lliang/GOBI_proj/frames/135D_05222_131313/",
-    "/exports/geos.ed.ac.uk/comet/lliang/GOBI_proj/frames/128A_05172_131313/",
-    "/exports/geos.ed.ac.uk/comet/lliang/GOBI_proj/frames/055A_05021_131313/",
-    "/exports/geos.ed.ac.uk/comet/lliang/GOBI_proj/frames/055A_05221_131313/",
+    # "/exports/geos.ed.ac.uk/comet/lliang/GOBI_proj/frames/128A_05172_131313/",
+    # "/exports/geos.ed.ac.uk/comet/lliang/GOBI_proj/frames/055A_05021_131313/",
+    # "/exports/geos.ed.ac.uk/comet/lliang/GOBI_proj/frames/055A_05221_131313/",
+    "/exports/geos.ed.ac.uk/comet/lliang/GOBI_proj/frames/033D_05106_131313/",
+    "/exports/geos.ed.ac.uk/comet/lliang/GOBI_proj/frames/135D_05023_131313/",
+    "/exports/geos.ed.ac.uk/comet/lliang/GOBI_proj/frames/135D_05222_131313/",
+
 ]
 FRAME_LABELS = ["033D_05106_131313", "135D_05023_131313", "135D_05222_131313", "128A_05172_131313", "055A_05021_131313", "055A_05221_131313"]
 FRAME_COLORS = [
@@ -58,7 +59,7 @@ MAP_WIDTH = "12c"
 DEM_RESOLUTION = "03s"  # SRTM resolution: "01m"=~1.8km, "03s"=~90m, "01s"=~30m
 PEN_WIDTH = "1.0p"
 
-OUT_DIR = os.path.join(BASE_DIR, 'outputs', 'frames_on_hillshade.png')
+OUT_DIR = os.path.join(BASE_DIR, 'outputs', 'frames_on_hillshade_d.png')
 
 
 def mli_boundary_polygon(frame_dir: str, simplify_tol: float = 0.01):
