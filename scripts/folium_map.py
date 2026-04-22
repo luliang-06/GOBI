@@ -51,7 +51,7 @@ last_update = '2026-03-25'
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 # IN_VU = os.path.join(BASE_DIR, 'data', 'vu_John_new.tif')
-IN_VU = os.path.join(BASE_DIR, 'data', 'vu_shiyang.tif')
+IN_VU = os.path.join(BASE_DIR, 'data', 'gwl_cr_SYref.tif')
 IN_GW = os.path.join(BASE_DIR, 'data', 'GWLcr_VU_ModelResult.csv')
 TS_DIR = os.path.join(BASE_DIR, 'outputs', 'GWL_VU_ts')
 BOUND = [101.7, 37.3, 104.7, 39.3] # left, bottom, right, top
@@ -69,7 +69,7 @@ with rasterio.open(IN_VU) as src:
 print('VU loaded succesfully.')
 
 img_masked = np.ma.masked_invalid(img)
-img_norm = (np.clip(img_masked, -10, 10) - (-10)) / (10 - (-10))
+img_norm = (np.clip(img_masked, -1, 1) - (-1)) / (1 - (-1))
 cmap_vu = plt.get_cmap('RdYlBu_r')
 img_rgba = (cmap_vu(img_norm) * 255).astype(np.uint8)
 if img_masked.mask is not np.ma.nomask:
