@@ -20,8 +20,11 @@ vu_ref="${BASE_DIR}/outputs/gps_ref/vu_shiyang_referenced.nc"
 vu_pred_sy="${BASE_DIR}/data/gwl_cr_SYref.nc"
 vu_pred_all="${BASE_DIR}/data/gwl_cr_all.nc"
 
-landcover="${BASE_DIR}/data/2018_QiLianShan_WholeArea_LC30.tif"
-basin="${BASE_DIR}/data/wuwei_level5_basin.gmt"
+landcover="${BASE_DIR}/data/shiyang_landcover.nc"
+permafrost="${BASE_DIR}/data/shiyang_permafrost.nc"
+river="${BASE_DIR}/data/shiyang_rivers.gmt"
+basin="${BASE_DIR}/data/shiyang_outline.gmt"
+glacier="${BASE_DIR}/data/shiyang_glacier.gmt"
 gps="${BASE_DIR}/data/GPS_merge.csv"
 
 OUT_DIR="${BASE_DIR}/outputs"
@@ -39,15 +42,40 @@ OUT_DIR="${BASE_DIR}/outputs"
 # 	gmt colorbar -DjTL+w1.25i/0.12i+o1/1+h+ml -F+gwhite+p0.1p -Bx1000+l"Elevation (m)" --FONT_ANNOT_PRIMARY=18p
 # gmt end
 
+# gmt begin ${OUT_DIR}/location_map png
+#     gmt basemap -R73/135/20/55 -JM6i -B10
+#     gmt grdimage @earth_relief_02m -I+d -Cgray
+#     gmt coast -W0.3p,black -N1/0.5p,gray50
+#     gmt plot $basin -W1.5p,red -Gred@60
+# gmt end
+
 # plot wells on landcover
 gmt begin ${OUT_DIR}/shiyang_landcover png
-	gmt basemap -R101.2/104.0/37.0/39.5 -JX6i -B1
+	gmt basemap -R101.2/104.0/37.0/39.5 -JX6i -B1 -BwESn
 	gmt grdimage @earth_relief_03s -I+d -Cgray -t30
 	gmt clip $basin
-	gmt grdimage $landcover -nn -Q -t0
+	gmt grdimage $landcover -Clandcover.cpt -T0/1 -Q -nn
+	gmt plot $glacier -W0.8p,
 	gmt clip -C
+	gmt makecpt -Cacton -I
+	gmt grdimage $permafrost -C -n+c -Q -t15
+	gmt plot $river -W0.8p,#0a33ff
+	gmt plot $glacier -W0.8p,#00f7ff
 	gmt plot $basin -W0.8p,black
-	awk -F "," '{print $3, $4}' $points | gmt plot -Sc0.2 -G138/21/40 -W0.4p,black
+	awk -F "," '{print $3, $4}' $points | gmt plot -Sc0.2 -G138/208/255 -W0.4p,black
+	cat << 'EOF' | gmt legend -DjTL+w4.5c+o0.2c/0.2c -F+p0.5p+g255/255/255@30
+G 0.1c
+S 0.3c s 0.3c  68/101/137  0.3p  0.6c  Water
+S 0.3c s 0.3c  38/115/0    0.3p  0.6c  Trees
+S 0.3c s 0.3c  255/211/76  0.3p  0.6c  Cropland
+S 0.3c s 0.3c  220/60/60   0.3p  0.6c  Urban
+S 0.3c s 0.3c  194/161/108 0.3p  0.6c  Bare ground
+S 0.3c s 0.3c  204/230/153 0.3p  0.6c  Rangeland
+S 0.3c s 0.3c  136/77/232  0.3p  0.6c  Permafrost
+S 0.3c c 0.2c  138/208/255 0.4p,black 0.6c Monitoring wells
+S 0.3c - 0.5c - 1.5p,#0a33ff 0.6c River
+S 0.3c - 0.5c - 1.5p,#00f7ff 0.6c Glacier
+EOF
 gmt end
 
 
