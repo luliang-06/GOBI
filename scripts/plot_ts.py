@@ -269,7 +269,7 @@ def plot_ts(gw_df, cum_ts, cum_dt, wid, frame_base,
         if gw_sin_model is not None and gw_x is not None:
             x_dense = np.linspace(gw_x.min(), gw_x.max(), 1000)
             dates_dense = [gw_df['date'].min() + pd.Timedelta(days=float(d)) for d in x_dense]
-            ax_sin.plot(dates_dense, predict_sin_only(x_dense, gw_sin_model), color='steelblue', linestyle='-', linewidth=1.2, label='GWL sin comp')
+            ax_sin.plot(dates_dense, predict_sin_only(x_dense, gw_sin_model)/0.0469, color='steelblue', linestyle='-', linewidth=1.2, label='GWL sin comp')
 
         # GWL detrend
         if cum_sin_model is not None and cum_x is not None:
