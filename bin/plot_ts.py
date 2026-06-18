@@ -73,7 +73,7 @@ IN_H5 = os.path.join(BASE_DIR, 'data', '*.cum_filt_deramp.h5')
 IN_H5_UNFILT = os.path.join(BASE_DIR, 'data', '*.cum.h5')
 OUT_DIR = os.path.join(BASE_DIR, 'outputs', 'GWL_VU_ts')
 
-PLOT_UNFILT = True
+PLOT_UNFILT = False
 PLOT_SEASON_COMP = True
 
 os.makedirs(OUT_DIR, exist_ok=True)
@@ -269,7 +269,7 @@ def plot_ts(gw_df, cum_ts, cum_dt, wid, frame_base,
         if gw_sin_model is not None and gw_x is not None:
             x_dense = np.linspace(gw_x.min(), gw_x.max(), 1000)
             dates_dense = [gw_df['date'].min() + pd.Timedelta(days=float(d)) for d in x_dense]
-            ax_sin.plot(dates_dense, predict_sin_only(x_dense, gw_sin_model)/0.0469, color='steelblue', linestyle='-', linewidth=1.2, label='GWL sin comp')
+            ax_sin.plot(dates_dense, predict_sin_only(x_dense, gw_sin_model)/0.0682, color='steelblue', linestyle='-', linewidth=1.2, label='GWL sin comp')
 
         # GWL detrend
         if cum_sin_model is not None and cum_x is not None:
@@ -451,6 +451,8 @@ def plot_reg(df):
     plt.show()
     plt.close()
     print(f'GW vs VU scatter saved to {out_vel_plot}.')
+
+    return b, c
 
 
 
