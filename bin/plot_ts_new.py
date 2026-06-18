@@ -77,7 +77,7 @@ csv_file = glob.glob(os.path.join(BASE_DIR, 'data', '*.csv'))
 IN_CSV = csv_file[0]
 IN_H5 = os.path.join(BASE_DIR, 'data', '*.cum_filt_deramp.h5')
 IN_H5_UNFILT = os.path.join(BASE_DIR, 'data', '*.cum.h5')
-IN_VU_ALL = os.path.join(BASE_DIR, 'data', 'vu_AHB.tif')
+IN_VU_ALL = os.path.join(BASE_DIR, 'data', 'vu_Shiyang.tif')
 OUT_DIR = os.path.join(BASE_DIR, 'outputs', 'GWL_VU_ts')
 
 PLOT_UNFILT = False
@@ -616,13 +616,14 @@ if __name__ == '__main__':
 
     # 7) plot GWL change rate vs vu change rate
     # model_df = pd.read_csv(os.path.join(BASE_DIR, 'data', 'GWLcr_VU_ModelResult.csv'))
-    reg_k, reg_c = plot_reg(model_pd)
+    # reg_k, reg_c = plot_reg(model_pd)
     reg_k_all, reg_c_all = plot_reg_allVU(model_pd, IN_VU_ALL, os.path.join(BASE_DIR, 'outputs'))
 
     # 8) calculate predicted gwl change rate
     vu_file = IN_VU_ALL
     gw_vel_tif = os.path.join(BASE_DIR, 'outputs', 'pred_GWLcr_VU.tif')
-    gw_vel_tif_all = os.path.join(BASE_DIR, 'outputs', 'pred_GWLcr_VUall.tif')
+    # gw_vel_tif_all = os.path.join(BASE_DIR, 'outputs', 'pred_GWLcr_VUall.tif')
+    gw_vu_tif = os.path.join(BASE_DIR, 'outputs', 'pred_GWLcr_VUdecompose.tif')
 
     # 8.1 Converting using sperated vus results
     print(f'Converting tif to predicted GWLcr ... (1/2)')
@@ -634,7 +635,7 @@ if __name__ == '__main__':
             nodata = -9999.0
         mask = (vu == nodata) | np.isnan(vu)
 
-        gw_vel = reg_k * vu + reg_c
+        gw_vel = reg_k_all * vu + reg_c_all
         gw_vel = gw_vel.astype("float32")
         gw_vel[mask] = nodata
 
@@ -663,10 +664,10 @@ if __name__ == '__main__':
         profile_gw_all = profile_all.copy()
         profile_gw_all.update(dtype="float32", nodata=nodata, count=1)
 
-        with rasterio.open(gw_vel_tif_all, "w", **profile_gw_all) as dst:
+        with rasterio.open(gw_vu_tif, "w", **profile_gw_all) as dst:
             dst.write(gw_vel_all, 1)
     
-    print(f'Output tif saved to {gw_vel_tif_all}.')
+    print(f'Output tif saved to {gw_vu_tif}.')
 
     # Finish
     elapsed = time.time() - start
