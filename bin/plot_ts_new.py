@@ -78,6 +78,7 @@ IN_CSV = csv_file[0]
 IN_H5 = os.path.join(BASE_DIR, 'data', '*.cum_filt_deramp.h5')
 IN_H5_UNFILT = os.path.join(BASE_DIR, 'data', '*.cum.h5')
 IN_VU_ALL = os.path.join(BASE_DIR, 'data', 'vu_Shiyang.tif')
+IN_VU = os.path.join(BASE_DIR, 'data', 'vu_Shiyang_decomposed.tif')
 OUT_DIR = os.path.join(BASE_DIR, 'outputs', 'GWL_VU_ts')
 
 PLOT_UNFILT = False
@@ -617,11 +618,11 @@ if __name__ == '__main__':
     # 7) plot GWL change rate vs vu change rate
     # model_df = pd.read_csv(os.path.join(BASE_DIR, 'data', 'GWLcr_VU_ModelResult.csv'))
     # reg_k, reg_c = plot_reg(model_pd)
-    reg_k_all, reg_c_all = plot_reg_allVU(model_pd, IN_VU_ALL, os.path.join(BASE_DIR, 'outputs'))
+    reg_k_all, reg_c_all = plot_reg_allVU(model_pd, IN_VU, os.path.join(BASE_DIR, 'outputs'))
 
     # 8) calculate predicted gwl change rate
-    vu_file = IN_VU_ALL
-    gw_vel_tif = os.path.join(BASE_DIR, 'outputs', 'pred_GWLcr_VU.tif')
+    vu_file = IN_VU
+    # gw_vel_tif = os.path.join(BASE_DIR, 'outputs', 'pred_GWLcr_VU.tif')
     # gw_vel_tif_all = os.path.join(BASE_DIR, 'outputs', 'pred_GWLcr_VUall.tif')
     gw_vu_tif = os.path.join(BASE_DIR, 'outputs', 'pred_GWLcr_VUdecompose.tif')
 
@@ -642,10 +643,10 @@ if __name__ == '__main__':
         profile_gw = profile.copy()
         profile_gw.update(dtype="float32", nodata=nodata, count=1)
 
-        with rasterio.open(gw_vel_tif, "w", **profile_gw) as dst:
+        with rasterio.open(gw_vu_tif, "w", **profile_gw) as dst:
             dst.write(gw_vel, 1)
     
-    print(f'Output tif saved to {gw_vel_tif}.')
+    print(f'Output tif saved to {gw_vu_tif}.')
 
     # 8.2 Converting using whole vu results
     print(f'Converting tif to predicted GWLcr ... (2/2)')
