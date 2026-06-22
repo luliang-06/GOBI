@@ -55,6 +55,7 @@ print('\n{} ver{} {} {}'.format(os.path.basename(sys.argv[0]), ver, last_update,
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 IN_GW = os.path.join(BASE_DIR, 'data', 'GWLcr_VU_ModelResult.csv')
 IN_VU = os.path.join(BASE_DIR, 'outputs', 'gps_ref', 'vu_shiyang_referenced.tif')
+VU = os.path.join(BASE_DIR, 'data', 'vu_Shiyang_decomposed.tif')
 OUT_DIR = os.path.join(BASE_DIR, 'outputs')
 os.makedirs(OUT_DIR, exist_ok=True)   
 
@@ -124,7 +125,7 @@ if __name__ == '__main__':
     print('Loading in csv file ...')
     gw_df = pd.read_csv(IN_GW)
 
-    plot_reg_allVU(gw_df, IN_VU, OUT_DIR)
+    plot_reg_allVU(gw_df, VU, OUT_DIR)
 
     # Finish
     elapsed = time.time() - start
