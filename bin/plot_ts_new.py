@@ -262,9 +262,11 @@ def plot_ts(gw_df, cum_ts, cum_dt, wid, frame_base,
         if gw_sin_model is not None and gw_x is not None:
             x_dense = np.linspace(gw_x.min(), gw_x.max(), 1000)
             dates_dense = [gw_df['date'].min() + pd.Timedelta(days=float(d)) for d in x_dense]
-            ax_sin.plot(dates_dense, predict_sin_only(x_dense, gw_sin_model/0.0682), color='steelblue', linestyle='-', linewidth=1.2, label='GWL sin comp')
+            gw_sin_model_vu = np.array(gw_sin_model, dtype=float).copy()
+            gw_sin_model_vu[0] = gw_sin_model_vu[0] / 0.0430
+            ax_sin.plot(dates_dense, predict_sin_only(x_dense, gw_sin_model_vu),color='steelblue', linestyle='-', linewidth=1.2, label='GWL sin comp')
 
-        # GWL detrend
+        # VU detrend
         if cum_sin_model is not None and cum_x is not None:
             x_dense = np.linspace(cum_x.min(), cum_x.max(), 1000)
             dates_dense = [cum_dt[0] + pd.Timedelta(days=float(d)) for d in x_dense]
@@ -499,7 +501,6 @@ if __name__ == '__main__':
 
             # get vel values
             #cum = f['cumU'][:]
-            # cum = f['cumU'][:, yi, xi].astype(float)
 
             # get imdates
             imdates = f['imdates'][:]
@@ -531,8 +532,7 @@ if __name__ == '__main__':
 
                 # 4.3 cum fit
                 xi, yi = int(xi), int(yi)
-                cum_ts = cum[:, yi, xi].astype(float)
-                cum = f['cumU'][:, yi, xi].astype(float)
+                cum_ts = f['cumU'][:, yi, xi].astype(float)
                 cum_x = np.array([(d - cum_dates[0]).days for d in cum_dates], dtype=float)
 
                 # for linear fit
