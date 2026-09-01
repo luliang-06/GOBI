@@ -453,6 +453,7 @@ if __name__ == '__main__':
     # 2) Wells and groups
     # 2.1 select all wells, and avoid duplicates
     wells = df[['well_id', 'lon', 'lat']].drop_duplicates('well_id')
+    wells = wells.iloc[:119]
     print(f'Total {wells.shape[0]} wells found in CSV.')
     
     # group by well_id
