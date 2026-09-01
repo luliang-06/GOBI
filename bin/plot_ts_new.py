@@ -498,7 +498,8 @@ if __name__ == '__main__':
             lat = get_dim(f, 'lat')
 
             # get vel values
-            cum = f['cumU'][:]
+            #cum = f['cumU'][:]
+            # cum = f['cumU'][:, yi, xi].astype(float)
 
             # get imdates
             imdates = f['imdates'][:]
@@ -531,6 +532,7 @@ if __name__ == '__main__':
                 # 4.3 cum fit
                 xi, yi = int(xi), int(yi)
                 cum_ts = cum[:, yi, xi].astype(float)
+                cum = f['cumU'][:, yi, xi].astype(float)
                 cum_x = np.array([(d - cum_dates[0]).days for d in cum_dates], dtype=float)
 
                 # for linear fit
