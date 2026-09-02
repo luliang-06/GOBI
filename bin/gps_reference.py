@@ -71,10 +71,6 @@ IN_GPS = os.path.join(BASE_DIR, 'data', 'GPS_merge.csv')
 COORD_EXTENT = (101.7, 37.3, 104.7, 39.3)  # minx, miny, maxx, maxy
 EXTENT_FOR_PLOT = [COORD_EXTENT[0], COORD_EXTENT[2], COORD_EXTENT[1], COORD_EXTENT[3]]  # left, right, bottom, top
 
-OUT_DIR = os.path.join(BASE_DIR, 'outputs', 'gps_ref')
-if not os.path.exists(OUT_DIR):
-    os.path.mkdir(OUT_DIR)
-
 
 class OpenTif:
     """ a Class that stores the band array and metadata of a Gtiff file."""
@@ -170,6 +166,10 @@ if __name__ == '__main__':
     # Start
     start = time.time()
     print('\n{} ver{} {} {}'.format(os.path.basename(sys.argv[0]), ver, last_update, author))
+
+    OUT_DIR = os.path.join(BASE_DIR, 'outputs', 'gps_ref')
+    if not os.path.exists(OUT_DIR):
+        os.makedirs(OUT_DIR)
 
     # Open vu tif
     tif = OpenTif(IN_TIF)
