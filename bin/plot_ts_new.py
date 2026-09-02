@@ -32,6 +32,8 @@ outputs/
 '''
 # Change Log:
 '''
+v1.4.0 20260902, Lu Liang, UoE
+ - function of save InSAR time series used added.
 v1.3.2 20260323, Lu Liang, UoE
  - optional sin component subplot added as optional.
 v1.3.1 20260322, Lu Liang, UoE
@@ -66,10 +68,11 @@ import seaborn as sns
 import statsmodels.api as sm
 from scipy.optimize import curve_fit
 from plot_reg import plot_reg_allVU
+from extract_ts import extract_ts
 
 author = 'Lu Liang, University of Edinburgh, School of Geosciences'
-ver = 'v1.3.1'
-last_update = '2026-03-23'
+ver = 'v1.4.0'
+last_update = '2026-09-02'
 
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
@@ -457,7 +460,7 @@ if __name__ == '__main__':
     wells = df[['well_id', 'lon', 'lat']].drop_duplicates('well_id')
     wells = wells.iloc[:119]
     print(f'Total {wells.shape[0]} wells found in CSV.')
-    
+
     # group by well_id
     groups = df.groupby('well_id')
 
@@ -469,13 +472,15 @@ if __name__ == '__main__':
     h5_fn = sorted(glob.glob(IN_H5))
     print(f'Total {len(h5_fn)} hdf5 found.')
 
+    # save ts used
+    extract_ts(wells, h5_fn, dataset='cumU', out_dir=os.path.join(BASE_DIR, 'outputs'))
+
     well_plotted = 0
     
     # 3.2 loop for each hdf5 file
     for fn in h5_fn:
         frame_base = os.path.basename(fn).split('.cum_filt_deramp.h5')[0]
         print(f'Processing {frame_base} ...')
-
 
         # 3.3 load unfiltered cum if toggled on
         cum_unfilt = None
