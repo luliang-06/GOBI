@@ -40,16 +40,13 @@ import geopandas as gpd
 import matplotlib.pyplot as plt
 import statsmodels.api as sm
 
-from plot_ts import load_gw_obs_csv, calc_wls
+from plot_ts_new import load_gw_obs_csv, calc_wls
 from gps_reference import OpenTif
 
 # Start
 author = 'Lu Liang, University of Edinburgh, School of Geosciences'
 ver = 'v1.1'
 last_update = '2026-03-30'
-
-start = time.time()
-print('\n{} ver{} {} {}'.format(os.path.basename(sys.argv[0]), ver, last_update, author))
 
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
