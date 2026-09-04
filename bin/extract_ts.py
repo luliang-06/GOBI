@@ -51,7 +51,7 @@ def extract_ts(wells, h5_files, dataset='cumU', out_dir=None):
     ts = []
 
     for fn in h5_files:
-        frame_base = os.path.basename(fn).split('.cum.h5')[0]
+        frame_base = os.path.basename(fn).split('.cum')[0]
 
         with h5.File(fn, 'r') as f:
             lon = get_dim(f, 'lon')
