@@ -73,8 +73,8 @@ def extract_ts(wells, h5_files, dataset='cumU', out_dir=None):
                     ts.append({
                         'well_id': wid, 
                         'frame': frame_base, 
-                        'lon_idx': xi, 
-                        'lat_idx': yi,
+                        'x_idx': xi, 
+                        'y_idx': yi,
                         'pixel_index': pixel_index,
                         'date': d, 
                         dataset: v
