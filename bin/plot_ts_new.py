@@ -32,6 +32,11 @@ outputs/
 '''
 # Change Log:
 '''
+v1.4.1 20260904, Lu Liang, UoE
+ - seasonal component subplot legend optimised.
+ - double axis set for seasonal component subplot.
+ - function of print T for InSAR & GWL added (to check if T = 365.25)
+ - ts plots exported as png & pdf.
 v1.4.0 20260902, Lu Liang, UoE
  - function of save InSAR time series used added.
 v1.3.2 20260323, Lu Liang, UoE
@@ -71,8 +76,8 @@ from plot_reg import plot_reg_allVU
 from extract_ts import extract_ts
 
 author = 'Lu Liang, University of Edinburgh, School of Geosciences'
-ver = 'v1.4.0'
-last_update = '2026-09-02'
+ver = 'v1.4.1'
+last_update = '2026-09-04'
 
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
@@ -131,7 +136,8 @@ def load_gw_obs_csv(in_csv):
     df = df.rename(columns={'编号':'well_id',
                             '经度':'lon', 
                             '纬度':'lat', 
-                            '地面标高':'elevation'
+                            '地面标高':'elevation',
+                            '检测层位':'aquifer_type'
                             })
 
     # 1.2 convert well_id to str to avoid scientific rotation
@@ -142,7 +148,7 @@ def load_gw_obs_csv(in_csv):
     day_cols = [c for c in df.columns if pattern.match(str(c))]
 
     # 1.4 melt wide csv -> long csv
-    df = df.melt(id_vars=['well_id', 'lon', 'lat', 'elevation'],
+    df = df.melt(id_vars=['well_id', 'lon', 'lat', 'elevation', 'aquifer_type'],
                 value_vars=day_cols,
                 var_name='obs_date',
                 value_name='obs_gw'
@@ -234,7 +240,7 @@ def predict_sin_only(t, popt):
     A, T, phi, k, c = popt
     return A * np.sin(2 * np.pi * t/T + phi)
     
-def plot_ts(gw_df, cum_ts, cum_dt, wid, frame_base, 
+def plot_ts(gw_df, cum_ts, cum_dt, wid, frame_base, aquifer_type, 
             gw_x=None, gw_model=None, gw_sin_model=None,   
             cum_x=None, cum_model=None, cum_sin_model=None, 
             cum_unfilt_dt=None, cum_unfilt_ts=None, cum_unfilt_x=None, cum_unfilt_sin_model=None,
@@ -276,7 +282,7 @@ def plot_ts(gw_df, cum_ts, cum_dt, wid, frame_base,
             dates_dense = [gw_df['date'].min() + pd.Timedelta(days=float(d)) for d in x_dense]
             ax_sin2.plot(dates_dense, predict_sin_only(x_dense, gw_sin_model), color='steelblue', linestyle='-', linewidth=1.2, label='Groundwater Level Seasonal Component')
 
-        ax_sin.set_title(f'Frame: {frame_base} | Well ID: {wid}', fontsize=12)
+        ax_sin.set_title(f'Frame: {frame_base} | Well ID: {wid} | Layer: {aquifer_type}', fontsize=12)
         ax_sin.set_ylabel('Cummulative Displacement\nSeasonal Component (mm)', fontsize=11)
         ax_sin2.set_ylabel('Groundwater Level\nSeasonal Component (m)', color='steelblue', fontsize=11)
         ax_sin2.grid(False)
@@ -367,7 +373,7 @@ def plot_ts(gw_df, cum_ts, cum_dt, wid, frame_base,
     # -------------------------------------------------------------------------------
     # ax settings
     if ax_sin is None:
-        ax.set_title(f'Frame: {frame_base} | Well ID: {wid}', fontsize=12)
+        ax.set_title(f'Frame: {frame_base} | Well ID: {wid} | Layer: {aquifer_type}', fontsize=12)
     ax.set_xlabel('Time', fontsize=12)
 
     ax2.grid(False)
@@ -392,7 +398,8 @@ def plot_ts(gw_df, cum_ts, cum_dt, wid, frame_base,
     ax2.legend(lines1 + lines2, labels1 + labels2, loc='upper right', fontsize=9)
     ax.get_legend().remove() if ax.get_legend() else None
 
-    plt.savefig(os.path.join(OUT_DIR, f'F{frame_base}_W{wid}.png'))
+    for ext in ['png', 'pdf']:
+        plt.savefig(os.path.join(OUT_DIR, f'F{frame_base}_W{wid}_{aquifer_type}.{ext}'))
     plt.close(fig)
 
     return True
@@ -465,7 +472,7 @@ if __name__ == '__main__':
 
     # 2) Wells and groups
     # 2.1 select all wells, and avoid duplicates
-    wells = df[['well_id', 'lon', 'lat']].drop_duplicates('well_id')
+    wells = df[['well_id', 'lon', 'lat', 'aquifer_type']].drop_duplicates('well_id')
     wells = wells.iloc[:119]
     print(f'Total {wells.shape[0]} wells found in CSV.')
 
@@ -525,7 +532,7 @@ if __name__ == '__main__':
 
             # 4) Model fitting
             # 4.1 loop each well within this frame
-            for wid, xi, yi, lon, lat in zip(wells['well_id'], lon_idx, lat_idx, wells['lon'], wells['lat']):    # zip() to iterate two lists together
+            for wid, xi, yi, lon, lat, aquifer_type in zip(wells['well_id'], lon_idx, lat_idx, wells['lon'], wells['lat'], wells['aquifer_type']):    # zip() to iterate two lists together
 
                 # 4.2 groundwater model fit
                 sub = groups.get_group(wid).sort_values('date') # get date for specific well
@@ -581,7 +588,8 @@ if __name__ == '__main__':
                     'frame': frame_base,
                     'well_id': wid,
                     'lon': lon,
-                    'lat': lat,  
+                    'lat': lat,
+                    'aquifer_type': aquifer_type, 
                     # linear fit
                     'gw_linear':      gw_vel,
                     'gw_unc_linear':  gw_unc,
@@ -590,6 +598,8 @@ if __name__ == '__main__':
                     # sinusoidal fit: gw  (A in m, phi in rad, k in m/yr)
                     'gw_amp':         gw_sin_model[0]        if gw_sin_model is not None else np.nan,
                     'gw_amp_unc':     gw_sin_unc[0]          if gw_sin_unc   is not None else np.nan,
+                    'gw_T':           gw_sin_model[1]        if gw_sin_model is not None else np.nan,
+                    'gw_T_unc':       gw_sin_unc[1]          if gw_sin_unc   is not None else np.nan,
                     'gw_phi':         gw_sin_model[2]        if gw_sin_model is not None else np.nan,
                     'gw_phi_unc':     gw_sin_unc[2]          if gw_sin_unc   is not None else np.nan,
                     'gw_k_sin':       gw_sin_model[3]*365.25 if gw_sin_model is not None else np.nan,
@@ -597,21 +607,23 @@ if __name__ == '__main__':
                     # sinusoidal fit: filtered cum  (A in mm, phi in rad, k in mm/yr)
                     'vu_amp':         cum_sin_model[0]        if cum_sin_model is not None else np.nan,
                     'vu_amp_unc':     cum_sin_unc[0]          if cum_sin_unc   is not None else np.nan,
+                    'vu_T':           cum_sin_model[1]        if cum_sin_model is not None else np.nan,
+                    'vu_T_unc':       cum_sin_unc[1]          if cum_sin_unc   is not None else np.nan,
                     'vu_phi':         cum_sin_model[2]        if cum_sin_model is not None else np.nan,
                     'vu_phi_unc':     cum_sin_unc[2]          if cum_sin_unc   is not None else np.nan,
                     'vu_k_sin':       cum_sin_model[3]*365.25 if cum_sin_model is not None else np.nan,
                     'vu_k_sin_unc':   cum_sin_unc[3]*365.25   if cum_sin_unc   is not None else np.nan,
-                    # sinusoidal fit: unfiltered cum  (A in mm, phi in rad, k in mm/yr)
-                    'vu_unfilt_amp':        cum_unfilt_sin_model[0]        if cum_unfilt_sin_model is not None else np.nan,
-                    'vu_unfilt_amp_unc':    cum_unfilt_sin_unc[0]          if cum_unfilt_sin_unc   is not None else np.nan,
-                    'vu_unfilt_phi':        cum_unfilt_sin_model[2]        if cum_unfilt_sin_model is not None else np.nan,
-                    'vu_unfilt_phi_unc':    cum_unfilt_sin_unc[2]          if cum_unfilt_sin_unc   is not None else np.nan,
-                    'vu_unfilt_k_sin':      cum_unfilt_sin_model[3]*365.25 if cum_unfilt_sin_model is not None else np.nan,
-                    'vu_unfilt_k_sin_unc':  cum_unfilt_sin_unc[3]*365.25   if cum_unfilt_sin_unc   is not None else np.nan,
+                    # # sinusoidal fit: unfiltered cum  (A in mm, phi in rad, k in mm/yr)
+                    # 'vu_unfilt_amp':        cum_unfilt_sin_model[0]        if cum_unfilt_sin_model is not None else np.nan,
+                    # 'vu_unfilt_amp_unc':    cum_unfilt_sin_unc[0]          if cum_unfilt_sin_unc   is not None else np.nan,
+                    # 'vu_unfilt_phi':        cum_unfilt_sin_model[2]        if cum_unfilt_sin_model is not None else np.nan,
+                    # 'vu_unfilt_phi_unc':    cum_unfilt_sin_unc[2]          if cum_unfilt_sin_unc   is not None else np.nan,
+                    # 'vu_unfilt_k_sin':      cum_unfilt_sin_model[3]*365.25 if cum_unfilt_sin_model is not None else np.nan,
+                    # 'vu_unfilt_k_sin_unc':  cum_unfilt_sin_unc[3]*365.25   if cum_unfilt_sin_unc   is not None else np.nan,
                 })
 
                 # 5) plot
-                plotted = plot_ts(sub, cum_ts, cum_dates, wid, frame_base,
+                plotted = plot_ts(sub, cum_ts, cum_dates, wid, frame_base, aquifer_type, 
                                   gw_x=gw_x, gw_model=gw_model, gw_sin_model=gw_sin_model,
                                   cum_x=cum_x, cum_model=cum_model, cum_sin_model=cum_sin_model,
                                   cum_unfilt_dt=cum_unfilt_dt, cum_unfilt_ts=cum_unfilt_ts,
