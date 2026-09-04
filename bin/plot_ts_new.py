@@ -76,8 +76,9 @@ last_update = '2026-09-02'
 
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
-csv_file = glob.glob(os.path.join(BASE_DIR, 'data', '*.csv'))
-IN_CSV = csv_file[0]
+# csv_file = glob.glob(os.path.join(BASE_DIR, 'data', '*.csv'))
+# IN_CSV = csv_file[0]
+IN_CSV = os.path.join(BASE_DIR, 'data', 'GWL_5days_example.csv') # for test
 IN_H5 = os.path.join(BASE_DIR, 'data', '*.cum_filt_deramp.h5')
 IN_H5_UNFILT = os.path.join(BASE_DIR, 'data', '*.cum.h5')
 IN_VU_ALL = os.path.join(BASE_DIR, 'data', 'vu_Shiyang.tif')
@@ -152,7 +153,7 @@ def load_gw_obs_csv(in_csv):
         try:
             return pd.to_datetime(s, format='%Y/%m/%d')
         except ValueError:
-            return pd.to_datetime(s, '%m/%d/%Y')
+            return pd.to_datetime(s, format='%m/%d/%Y')
     
     df['date'] = df['obs_date'].apply(parse_date)
     print(f'csv sample check:')
@@ -261,25 +262,32 @@ def plot_ts(gw_df, cum_ts, cum_dt, wid, frame_base,
     # -------------------------------------------------------------------------------
     # plot if PLOT_SEASON_COMP = True
     if ax_sin is not None:
-        # GWL detrend
-        if gw_sin_model is not None and gw_x is not None:
-            x_dense = np.linspace(gw_x.min(), gw_x.max(), 1000)
-            dates_dense = [gw_df['date'].min() + pd.Timedelta(days=float(d)) for d in x_dense]
-            gw_sin_model_vu = np.array(gw_sin_model, dtype=float).copy()
-            gw_sin_model_vu[0] = gw_sin_model_vu[0] / 0.0430
-            ax_sin.plot(dates_dense, predict_sin_only(x_dense, gw_sin_model_vu),color='steelblue', linestyle='-', linewidth=1.2, label='GWL sin comp')
+        ax_sin2 = ax_sin.twinx()
 
-        # VU detrend
+        # VU seasonal component (left axis, in mm)
         if cum_sin_model is not None and cum_x is not None:
             x_dense = np.linspace(cum_x.min(), cum_x.max(), 1000)
             dates_dense = [cum_dt[0] + pd.Timedelta(days=float(d)) for d in x_dense]
-            ax_sin.plot(dates_dense, predict_sin_only(x_dense, cum_sin_model), color='firebrick', linestyle='-', linewidth=1.2, label='filt CUM sin comp')
+            ax_sin.plot(dates_dense, predict_sin_only(x_dense, cum_sin_model), color='firebrick', linestyle='-', linewidth=1.2, label='InSAR Seasonal Component')
+
+        # GWL seasonal component (right axis, in m)
+        if gw_sin_model is not None and gw_x is not None:
+            x_dense = np.linspace(gw_x.min(), gw_x.max(), 1000)
+            dates_dense = [gw_df['date'].min() + pd.Timedelta(days=float(d)) for d in x_dense]
+            ax_sin2.plot(dates_dense, predict_sin_only(x_dense, gw_sin_model), color='steelblue', linestyle='-', linewidth=1.2, label='Groundwater Level Seasonal Component')
 
         ax_sin.set_title(f'Frame: {frame_base} | Well ID: {wid}', fontsize=12)
-        ax_sin.set_ylabel('Seasonal Components', fontsize=12)
-        ax_sin.legend(loc='upper right', fontsize=9)
+        ax_sin.set_ylabel('Cummulative Displacement\nSeasonal Component (mm)', fontsize=11)
+        ax_sin2.set_ylabel('Groundwater Level\nSeasonal Component (m)', color='steelblue', fontsize=11)
+        ax_sin2.grid(False)
+        ax_sin2.tick_params(axis='y', colors='steelblue')
+
+        lines1, labels1 = ax_sin.get_legend_handles_labels()
+        lines2, labels2 = ax_sin2.get_legend_handles_labels()
+        ax_sin2.legend(lines1 + lines2, labels1 + labels2, loc='upper right', fontsize=9)
+
         ax_sin.xaxis.set_major_locator(mdates.YearLocator())
-        ax_sin.xaxis.set_major_formatter(mdates.DateFormatter('%Y'))
+        ax_sin.xaxis.set_major_formatter(mdates.DateFormatter('%b %Y'))
         plt.setp(ax_sin.get_xticklabels(), visible=False)
     # -------------------------------------------------------------------------------
     # plot cum.h5
@@ -287,14 +295,14 @@ def plot_ts(gw_df, cum_ts, cum_dt, wid, frame_base,
         sns.scatterplot(
             x=cum_unfilt_dt, y=cum_unfilt_ts, ax=ax, 
             s=30, alpha=0.5, facecolor='lightgrey', edgecolor='grey', linewidth=0.8,
-            label='cum.h5')
+            label='Unfilted InSAR Displacement')
         
     # sin model
     if cum_unfilt_sin_model is not None and cum_unfilt_x is not None:
         x_dense = np.linspace(cum_unfilt_x.min(), cum_unfilt_x.max(), 1000)
         dates_dense = [cum_unfilt_dt[0] + pd.Timedelta(days=float(d)) for d in x_dense]
         cum_uf_k = cum_unfilt_sin_model[3] * 365.25
-        ax.plot(dates_dense, predict_sin(x_dense, cum_unfilt_sin_model), color='grey', linestyle='-', linewidth=1.2, label=f'sin fit: cum.h5 (k = {cum_uf_k:+.2f} mm/yr)')
+        ax.plot(dates_dense, predict_sin(x_dense, cum_unfilt_sin_model), color='grey', linestyle='-', linewidth=1.2, label=f'Unfilted InSAR trend fit ({cum_uf_k:+.2f} mm/yr)')
         cum_unfilt_sin_slope = cum_unfilt_sin_model[3] * x_dense + cum_unfilt_sin_model[4]
         ax.plot(dates_dense, cum_unfilt_sin_slope, color='grey', linestyle='-', linewidth=1.2)
 
@@ -303,14 +311,14 @@ def plot_ts(gw_df, cum_ts, cum_dt, wid, frame_base,
     sns.scatterplot(
         x=cum_dt, y=cum_ts, ax=ax, 
         s=30, alpha=0.5, facecolor='firebrick', edgecolor='darkred', linewidth=0.8,
-        label='cum_filt_deramp.h5')
+        label='InSAR displacement')
 
     # sin model
     if cum_sin_model is not None and cum_x is not None:
         x_dense = np.linspace(cum_x.min(), cum_x.max(), 1000)
         dates_dense = [cum_dt[0] + pd.Timedelta(days=float(d)) for d in x_dense]
         cum_k = cum_sin_model[3] * 365.25
-        ax.plot(dates_dense, predict_sin(x_dense, cum_sin_model), color='firebrick', linestyle='-', linewidth=1.2, label=f'sin fit: cum_filt_deramp.h5 (k = {cum_k:+.2f} mm/yr)')
+        ax.plot(dates_dense, predict_sin(x_dense, cum_sin_model), color='firebrick', linestyle='-', linewidth=1.2, label=f'InSAR trend fit ({cum_k:+.2f} mm/yr)')
         cum_sin_slope = cum_sin_model[3] * x_dense + cum_sin_model[4]
         ax.plot(dates_dense, cum_sin_slope, color='firebrick', linestyle='-', linewidth=1.2)
         # ax2.text(0.75, 0.88, 
@@ -331,14 +339,14 @@ def plot_ts(gw_df, cum_ts, cum_dt, wid, frame_base,
     sns.scatterplot(
         x=gw_df['date'], y=gw_df['obs_gw'], ax=ax2, 
         s=30, alpha=0.5, facecolor='steelblue', edgecolor='navy', linewidth=0.8,
-        label='Groundwater Level')
+        label='Observed Groundwater Level')
     
     # sin model
     if gw_sin_model is not None and gw_x is not None:
         x_dense = np.linspace(gw_x.min(), gw_x.max(), 1000)
         dates_dense = [gw_df['date'].min() + pd.Timedelta(days=float(d)) for d in x_dense]
         gw_k = gw_sin_model[3] * 365.25
-        ax2.plot(dates_dense, predict_sin(x_dense, gw_sin_model), color='steelblue', linestyle='-', linewidth=1.2, label=f'sin fit: GWL (k = {gw_k:+.3f} m/yr)')
+        ax2.plot(dates_dense, predict_sin(x_dense, gw_sin_model), color='steelblue', linestyle='-', linewidth=1.2, label=f'Groundwater Level trend fit ({gw_k:+.3f} m/yr)')
         gw_sin_slope = gw_sin_model[3] * x_dense + gw_sin_model[4]
         ax2.plot(dates_dense, gw_sin_slope, color='steelblue', linestyle='-', linewidth=1.2)
         # A, T, phi, k, c = gw_sin_model
@@ -364,19 +372,19 @@ def plot_ts(gw_df, cum_ts, cum_dt, wid, frame_base,
 
     ax2.grid(False)
 
-    ax.set_ylabel('Cummulative Displacement (mm)', fontsize=12)
-    ax2.set_ylabel('Ground Water Level (m)', color='steelblue', fontsize=12)
+    ax.set_ylabel('InSAR Cummulative Displacement (mm)', fontsize=12)
+    ax2.set_ylabel('Groundwater Level (m)', color='steelblue', fontsize=12)
     
     ymin, ymax = ax2.get_ylim()
     yrange = ymax - ymin
     ax2.set_ylim(ymin - 0.2*yrange, ymax + 0.2*yrange)
 
-    ax.xaxis.set_major_locator(mdates.YearLocator())
-    ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y'))
+    ax.xaxis.set_major_locator(mdates.YearLocator()) # grid line -> 01/01/year
+    ax.xaxis.set_major_formatter(mdates.DateFormatter('%b %Y'))
 
     ax2.ticklabel_format(style='plain', axis='y', useOffset=False)
     ax2.tick_params(axis='y', colors='steelblue')
-    ax2.yaxis.set_major_formatter(mtick.FormatStrFormatter('%.2f'))  # keep 2 decimal places 
+    ax2.yaxis.set_major_formatter(mtick.FormatStrFormatter('%.2f'))
 
     # legend setting
     lines1, labels1 = ax.get_legend_handles_labels()
@@ -445,11 +453,11 @@ def plot_reg(df):
 if __name__ == '__main__':
     # start
     start = time.time()
-    print('\n{} ver{} {} {}'.format(os.path.basename(sys.argv[0]), ver, last_update, author))
+    print('\n{} {} {} {}'.format(os.path.basename(sys.argv[0]), ver, last_update, author))
     if PLOT_UNFILT:
-        print(' --INFO-- PLOT_UNFILT: plotting unfilted cum as well.')
+        print('-----INFO----- PLOT_UNFILT: plotting unfilted cum.')
     if PLOT_SEASON_COMP: 
-        print(' --INFO-- PLOT_SEASON_COMP: plotting seasonal components.')
+        print('-----INFO----- PLOT_SEASON_COMP: plotting seasonal components.')
     print('----- Start. -----')
     
     # 1) load csv
