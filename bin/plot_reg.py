@@ -40,7 +40,7 @@ import geopandas as gpd
 import matplotlib.pyplot as plt
 import statsmodels.api as sm
 
-from plot_ts_new import load_gw_obs_csv, calc_wls
+from backup_scripts.plot_ts_old import load_gw_obs_csv, calc_wls
 from gps_reference import OpenTif
 
 # Start
