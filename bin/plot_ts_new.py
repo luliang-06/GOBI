@@ -81,9 +81,9 @@ last_update = '2026-09-04'
 
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
-# csv_file = glob.glob(os.path.join(BASE_DIR, 'data', '*.csv'))
-# IN_CSV = csv_file[0]
-IN_CSV = os.path.join(BASE_DIR, 'data', 'GWL_5days_example.csv') # for test
+csv_file = glob.glob(os.path.join(BASE_DIR, 'data', '*.csv'))
+IN_CSV = csv_file[0]
+# IN_CSV = os.path.join(BASE_DIR, 'data', 'GWL_5days_example.csv') # for test
 IN_H5 = os.path.join(BASE_DIR, 'data', '*.cum_filt_deramp.h5')
 IN_H5_UNFILT = os.path.join(BASE_DIR, 'data', '*.cum.h5')
 IN_VU_ALL = os.path.join(BASE_DIR, 'data', 'vu_Shiyang.tif')
