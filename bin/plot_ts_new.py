@@ -32,6 +32,8 @@ outputs/
 '''
 # Change Log:
 '''
+v1.4.2 20260907, Lu Liang, UoE
+ - aquifer type set by well_id rather than extract from raw csv.
 v1.4.1 20260904, Lu Liang, UoE
  - seasonal component subplot legend optimised.
  - double axis set for seasonal component subplot.
@@ -76,8 +78,8 @@ from plot_reg import plot_reg_allVU
 from extract_ts import extract_ts
 
 author = 'Lu Liang, University of Edinburgh, School of Geosciences'
-ver = 'v1.4.1'
-last_update = '2026-09-04'
+ver = 'v1.4.2'
+last_update = '2026-09-07'
 
 
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
@@ -136,8 +138,7 @@ def load_gw_obs_csv(in_csv):
     df = df.rename(columns={'编号':'well_id',
                             '经度':'lon', 
                             '纬度':'lat', 
-                            '地面标高':'elevation',
-                            '检测层位':'aquifer_type'
+                            '地面标高':'elevation'
                             })
 
     # 1.2 convert well_id to str to avoid scientific rotation
@@ -148,7 +149,7 @@ def load_gw_obs_csv(in_csv):
     day_cols = [c for c in df.columns if pattern.match(str(c))]
 
     # 1.4 melt wide csv -> long csv
-    df = df.melt(id_vars=['well_id', 'lon', 'lat', 'elevation', 'aquifer_type'],
+    df = df.melt(id_vars=['well_id', 'lon', 'lat', 'elevation'],
                 value_vars=day_cols,
                 var_name='obs_date',
                 value_name='obs_gw'
@@ -472,7 +473,9 @@ if __name__ == '__main__':
 
     # 2) Wells and groups
     # 2.1 select all wells, and avoid duplicates
-    wells = df[['well_id', 'lon', 'lat', 'aquifer_type']].drop_duplicates('well_id')
+    CONFINED_WELLS={'6206022100569','620621210658', '620621210659'} # set confined wells manually.
+    wells = df[['well_id', 'lon', 'lat']].drop_duplicates('well_id')
+    wells['aquifer_type'] = wells['well_id'].apply(lambda wid: 'confined' if wid in CONFINED_WELLS else 'unconfined') # set aquifer_type by well_id selected
     wells = wells.iloc[:119]
     print(f'Total {wells.shape[0]} wells found in CSV.')
 
