@@ -34,6 +34,7 @@ outputs/
 '''
 v1.4.2 20260907, Lu Liang, UoE
  - aquifer type set by well_id rather than extract from raw csv.
+ - dt and time lag added to ModelResult as output.
 v1.4.1 20260904, Lu Liang, UoE
  - seasonal component subplot legend optimised.
  - double axis set for seasonal component subplot.
@@ -586,6 +587,33 @@ if __name__ == '__main__':
                     cum_unfilt_sin_result = calc_sin(cum_unfilt_x, cum_unfilt_ts)
                     cum_unfilt_sin_model, cum_unfilt_sin_unc = cum_unfilt_sin_result if cum_unfilt_sin_result is not None else (None, None)
 
+                # convert phi to day-of-year (same convention as InSAR delta_t script)
+                if gw_sin_model is not None:
+                    doy0_gw = sub['date'].min().timetuple().tm_yday
+                    T_gw = gw_sin_model[1]
+                    gw_delta_t = (-gw_sin_model[2] * T_gw / (2 * np.pi) + doy0_gw) % 365.25
+                    gw_dt_unc = T_gw / (2 * np.pi) * gw_sin_unc[2]
+                else:
+                    gw_delta_t = np.nan
+                    gw_dt_unc = np.nan
+
+                if cum_sin_model is not None:
+                    doy0_cum = cum_dates[0].timetuple().tm_yday
+                    T_cum = cum_sin_model[1]
+                    vu_delta_t = (-cum_sin_model[2] * T_cum / (2 * np.pi) + doy0_cum) % 365.25
+                    vu_dt_unc = T_cum / (2 * np.pi) * cum_sin_unc[2]  # uncertainty propagation
+                else:
+                    vu_delta_t = np.nan
+                    vu_dt_unc = np.nan
+
+                # time lag: positive = deformation lags behind GWL
+                time_lag = vu_delta_t - gw_delta_t
+                if time_lag > 182:
+                    time_lag -= 365.25
+                elif time_lag < -182:
+                    time_lag += 365.25
+                time_lag_unc = np.sqrt(vu_dt_unc**2 + gw_dt_unc**2)
+
                 # 6) append model result
                 model_results.append({
                     'frame': frame_base,
@@ -607,6 +635,8 @@ if __name__ == '__main__':
                     'gw_phi_unc':     gw_sin_unc[2]          if gw_sin_unc   is not None else np.nan,
                     'gw_k_sin':       gw_sin_model[3]*365.25 if gw_sin_model is not None else np.nan,
                     'gw_k_sin_unc':   gw_sin_unc[3]*365.25   if gw_sin_unc   is not None else np.nan,
+                    'gw_delta_t':     gw_delta_t,
+                    'gw_dt_unc':      gw_dt_unc,
                     # sinusoidal fit: filtered cum  (A in mm, phi in rad, k in mm/yr)
                     'vu_amp':         cum_sin_model[0]        if cum_sin_model is not None else np.nan,
                     'vu_amp_unc':     cum_sin_unc[0]          if cum_sin_unc   is not None else np.nan,
@@ -616,6 +646,11 @@ if __name__ == '__main__':
                     'vu_phi_unc':     cum_sin_unc[2]          if cum_sin_unc   is not None else np.nan,
                     'vu_k_sin':       cum_sin_model[3]*365.25 if cum_sin_model is not None else np.nan,
                     'vu_k_sin_unc':   cum_sin_unc[3]*365.25   if cum_sin_unc   is not None else np.nan,
+                    'vu_delta_t':     vu_delta_t,
+                    'vu_dt_unc':      vu_dt_unc,
+                    # phase time lag between gwl and filted vu
+                    'time_lag':       time_lag,
+                    'time_lag_unc':   time_lag_unc,
                     # # sinusoidal fit: unfiltered cum  (A in mm, phi in rad, k in mm/yr)
                     # 'vu_unfilt_amp':        cum_unfilt_sin_model[0]        if cum_unfilt_sin_model is not None else np.nan,
                     # 'vu_unfilt_amp_unc':    cum_unfilt_sin_unc[0]          if cum_unfilt_sin_unc   is not None else np.nan,
@@ -647,8 +682,7 @@ if __name__ == '__main__':
     print(f'Output csv saved to {out_csv}.')
 
     # 7) plot GWL change rate vs vu change rate
-    # model_df = pd.read_csv(os.path.join(BASE_DIR, 'data', 'GWLcr_VU_ModelResult.csv'))
-    # reg_k, reg_c = plot_reg(model_pd)
+    reg_k, reg_c = plot_reg(model_pd)
     reg_k_all, reg_c_all = plot_reg_allVU(model_pd, IN_VU, os.path.join(BASE_DIR, 'outputs'))
 
     # 8) calculate predicted gwl change rate
