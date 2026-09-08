@@ -23,6 +23,8 @@ outputs/
 '''
 # Change Log
 '''
+v1.2 20260908, Lu Liang, UoE
+ - export in both png and pdf format
 v1.1 20260330, Lu Liang, UoE
  - Edited into function format.
 v1.0.1 20251217, Lu Liang, UoE
@@ -105,11 +107,12 @@ def plot_reg_allVU(gw_df, vu_raster, out_dir):
         plt.ylabel('Groundwater Level Change Rate (m/yr)', fontsize=12)
         plt.title('VU vs groundwater Change Rate', fontsize=14)
 
-        out_path = os.path.join(out_dir, 'reg_GWLcr_vs_VUall.png')
+        out_path = os.path.join(out_dir, 'reg_GWLcr_vs_VUall')
         plt.tight_layout()
-        plt.savefig(out_path)
+        for ext in ['png', 'pdf']:
+            plt.savefig(f'{out_path}.{ext}')
         plt.close()
-        print(f'Plot saved to {out_path}.')
+        print(f'Plot saved to {out_path}.png/.pdf.')
 
     return b, c
 
