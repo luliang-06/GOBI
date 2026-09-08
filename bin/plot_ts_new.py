@@ -475,7 +475,7 @@ if __name__ == '__main__':
 
     # 2) Wells and groups
     # 2.1 select all wells, and avoid duplicates
-    CONFINED_WELLS={'6206022100569','620621210658', '620621210659'} # set confined wells manually.
+    CONFINED_WELLS={'W6206022100569','W620621210658', 'W620621210659'} # set confined wells manually.
     wells = df[['well_id', 'lon', 'lat']].drop_duplicates('well_id')
     wells['aquifer_type'] = wells['well_id'].apply(lambda wid: 'confined' if wid in CONFINED_WELLS else 'unconfined') # set aquifer_type by well_id selected
     wells = wells.iloc[:119]
