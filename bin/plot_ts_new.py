@@ -447,12 +447,13 @@ def plot_reg(df):
     plt.title('VU vs Groundwater Change Rate', fontsize=14)
 
     # save plot
-    out_vel_plot = os.path.join(BASE_DIR, 'outputs', 'reg_GWLcr_vs_VU.png')
+    out_vel_plot = os.path.join(BASE_DIR, 'outputs', 'reg_GWLcr_vs_VU')
     plt.tight_layout()
-    plt.savefig(out_vel_plot)
-    plt.show()
+    for ext in ['png', 'pdf']:
+        plt.savefig(f'{out_vel_plot}.{ext}')
     plt.close()
-    print(f'GW vs VU scatter saved to {out_vel_plot}.')
+
+    print(f'GW vs VU scatter saved to {out_vel_plot}.png/.pdf.')
 
     return b, c
 
@@ -682,7 +683,7 @@ if __name__ == '__main__':
     print(f'Output csv saved to {out_csv}.')
 
     # 7) plot GWL change rate vs vu change rate
-    reg_k, reg_c = plot_reg(model_pd)
+    # reg_k, reg_c = plot_reg(model_pd)
     reg_k_all, reg_c_all = plot_reg_allVU(model_pd, IN_VU, os.path.join(BASE_DIR, 'outputs'))
 
     # 8) calculate predicted gwl change rate
