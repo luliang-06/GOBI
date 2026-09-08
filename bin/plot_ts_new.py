@@ -5,7 +5,7 @@ Written by Lu Liang, University of Edinburgh, School of Geosciences, 2025.
 ===========
 Description
 ===========
-This scripts plot time series of groundwater level and cummulative deformation.
+This scripts plot time series of groundwater level and cumulative deformation.
 Do the linear or sinusoidal model of time seires and plot the seasonal components (if sinusoidal model applied)
 Export the model fit results into a csv.
 Plot the regression between groundwater level and Vu while return a function between tow parameters.
@@ -35,6 +35,7 @@ outputs/
 v1.4.2 20260907, Lu Liang, UoE
  - aquifer type set by well_id rather than extract from raw csv.
  - dt and time lag added to ModelResult as output.
+ - plot ts figure setting changed.
 v1.4.1 20260904, Lu Liang, UoE
  - seasonal component subplot legend optimised.
  - double axis set for seasonal component subplot.
@@ -285,14 +286,15 @@ def plot_ts(gw_df, cum_ts, cum_dt, wid, frame_base, aquifer_type,
             ax_sin2.plot(dates_dense, predict_sin_only(x_dense, gw_sin_model), color='steelblue', linestyle='-', linewidth=1.2, label='Groundwater Level Seasonal Component')
 
         ax_sin.set_title(f'Frame: {frame_base} | Well ID: {wid} | Layer: {aquifer_type}', fontsize=12)
-        ax_sin.set_ylabel('Cummulative Displacement\nSeasonal Component (mm)', fontsize=11)
+        ax_sin.set_ylabel('Cum. Displacement\nSeasonal Component (mm)', color='firebrick', fontsize=11)
         ax_sin2.set_ylabel('Groundwater Level\nSeasonal Component (m)', color='steelblue', fontsize=11)
         ax_sin2.grid(False)
+        ax_sin.tick_params(axis='y', colors='firebrick')
         ax_sin2.tick_params(axis='y', colors='steelblue')
 
-        lines1, labels1 = ax_sin.get_legend_handles_labels()
-        lines2, labels2 = ax_sin2.get_legend_handles_labels()
-        ax_sin2.legend(lines1 + lines2, labels1 + labels2, loc='upper right', fontsize=9)
+        # lines1, labels1 = ax_sin.get_legend_handles_labels()
+        # lines2, labels2 = ax_sin2.get_legend_handles_labels()
+        # ax_sin2.legend(lines1 + lines2, labels1 + labels2, loc='upper right', fontsize=9)
 
         ax_sin.xaxis.set_major_locator(mdates.YearLocator())
         ax_sin.xaxis.set_major_formatter(mdates.DateFormatter('%b %Y'))
@@ -380,19 +382,20 @@ def plot_ts(gw_df, cum_ts, cum_dt, wid, frame_base, aquifer_type,
 
     ax2.grid(False)
 
-    ax.set_ylabel('InSAR Cummulative Displacement (mm)', fontsize=12)
+    ax.set_ylabel('InSAR Cumulative Displacement (mm)', color='firebrick', fontsize=12)
     ax2.set_ylabel('Groundwater Level (m)', color='steelblue', fontsize=12)
     
     ymin, ymax = ax2.get_ylim()
     yrange = ymax - ymin
     ax2.set_ylim(ymin - 0.2*yrange, ymax + 0.2*yrange)
 
-    ax.xaxis.set_major_locator(mdates.YearLocator()) # grid line -> 01/01/year
+    ax.xaxis.set_major_locator(mdates.YearLocator(base=2)) # grid line -> 01/01/year
     ax.xaxis.set_major_formatter(mdates.DateFormatter('%b %Y'))
 
     ax2.ticklabel_format(style='plain', axis='y', useOffset=False)
+    ax.tick_params(axis='y', colors='firebrick')
     ax2.tick_params(axis='y', colors='steelblue')
-    ax2.yaxis.set_major_formatter(mtick.FormatStrFormatter('%.2f'))
+    ax2.yaxis.set_major_formatter(mtick.FormatStrFormatter('%d'))
 
     # legend setting
     lines1, labels1 = ax.get_legend_handles_labels()
