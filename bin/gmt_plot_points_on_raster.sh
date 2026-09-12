@@ -241,7 +241,7 @@ gmt begin ${OUT_DIR}/time_lag_on_vu_a png,pdf
 	gmt grdimage ${BASE_DIR}/data/055A_05021_131313/cum_fd.h5_vel.nc -n+c -Q -Ccpts/vu.cpt -t25
 	gmt grdimage ${BASE_DIR}/data/055A_05221_131313/cum_fd.h5_vel.nc -n+c -Q -Ccpts/vu.cpt -t25
 	gmt plot $basin -W0.8p,black
-	awk -F "," '(NR>1){print $3, $4, $30}' $points | gmt plot -Sc0.22 -Ccpts/timelag.cpt -W0.4p,black --GMT_VERBOSE=d
+	awk -F "," '(NR>1){print $3, $4, $30}' $points | gmt plot -Sc0.22 -Ccpts/timelag.cpt -W0.4p,black
     gmt colorbar -DjTL+w1.25i/0.12i+o1/1+h+e+ml -Ccpts/vu.cpt -F+gwhite+p0.1p -Bx10+l"Velocity (m/yr)" --FONT_ANNOT_PRIMARY=18p
 	gmt colorbar -DjTR+w1.25i/0.12i+o1/1+h+e+ml -Ccpts/timelag.cpt -F+gwhite+p0.1p -Bx90+l"Time lag (days)" --FONT_ANNOT_PRIMARY=18p
 gmt end
